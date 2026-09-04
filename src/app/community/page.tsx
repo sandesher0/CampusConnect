@@ -1,4 +1,7 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Community Forums
+"use client";
+
+import { Suspense } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { communityService } from "@/services/communityService";
@@ -7,6 +10,14 @@ import { useState } from "react";
 import Button from "@/components/common/Button";
 
 export default function CommunityPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">Loading...</div>}>
+      <CommunityPageInner />
+    </Suspense>
+  );
+}
+
+function CommunityPageInner() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");

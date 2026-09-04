@@ -1,4 +1,6 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Resource Detail
+"use client";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { resourceService } from "@/services/resourceService";
