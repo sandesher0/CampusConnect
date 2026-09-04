@@ -4,7 +4,7 @@ import Link from "next/link";
 import { communityService } from "@/services/communityService";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/common/Button";
+import Button from "@/components/common/Button";
 
 export default function CommunityPage() {
   const searchParams = useSearchParams();
@@ -123,7 +123,7 @@ export default function CommunityPage() {
         </div>
 
         {/* Communities grid */}
-        {communities.length === 0 && status !== "loading" ? (
+        {communities.length === 0 && status === "success" ? (
           <div className="text-center py-12">
             <p className="text-gray-500">
               No communities found matching your criteria.

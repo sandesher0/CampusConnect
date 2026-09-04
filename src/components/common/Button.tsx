@@ -12,6 +12,7 @@ interface ButtonProps {
   loading?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  onClick?: () => void;
 }
 
 export default function Button({

@@ -5,13 +5,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import { userService } from "@/services/userService";
-import { Button } from "@/components/common/Button";
+import Button from "@/components/common/Button";
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState(user ?? null);
+  const [editedFirstName, setEditedFirstName] = useState(user?.firstName ?? "");
+  const [editedLastName, setEditedLastName] = useState(user?.lastName ?? "");
+  const [editedEmail, setEditedEmail] = useState(user?.email ?? "");
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -22,10 +24,20 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // In a real app, this would call userService.updateProfile(editedUser!)
+      // In a real app, this would call userService.updateUser
+      // await userService.updateUser(user!.id, {
+      //   firstName: editedFirstName,
+      //   lastName: editedLastName,
+      //   email: editedEmail,
+      // });
       // For now, we'll just update the auth store
-      // await userService.updateProfile(editedUser!);
-      // useAuthStore.getState().setUser(editedUser!);
+      const updatedUser = {
+        ...user!,
+        firstName: editedFirstName,
+        lastName: editedLastName,
+        email: editedEmail,
+      };
+      // useAuthStore.getState().setUser(updatedUser);
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -63,12 +75,14 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-6">
               <div className="flex-shrink-0">
                 <div className="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-indigo-600 font-bold">{user.name.charAt(0)}</span>
+                  <span className="text-indigo-600 font-bold">
+                    {(user.firstName ?? "")?.charAt(0) ?? ""}{(user.lastName ?? "")?.charAt(0) ?? ""}
+                  </span>
                 </div>
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {user.name}
+                  {user.firstName} {user.lastName}
                 </h2>
                 <p className="text-sm text-gray-500">
                   {user.email}
@@ -87,12 +101,23 @@ export default function ProfilePage() {
                 }}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
+                      First Name
                     </label>
                     <input
                       type="text"
-                      value={editedUser?.name || ""}
-                      onChange={(e) => setEditedUser(prev => ({ ...prev!, name: e.target.value }))}
+                      value={editedFirstName}
+                      onChange={(e) => setEditedFirstName(e.target.value)}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editedLastName}
+                      onChange={(e) => setEditedLastName(e.target.value)}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     />
                   </div>
@@ -102,25 +127,27 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type="email"
-                      value={editedUser?.email || ""}
-                      onChange={(e) => setEditedUser(prev => ({ ...prev!, email: e.target.value }))}
+                      value={editedEmail}
+                      onChange={(e) => setEditedEmail(e.target.value)}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <Button
                       variant="outline"
-                      type="button"
                       onClick={() => {
                         setIsEditing(false);
-                        setEditedUser(user);
+                        // Reset edited fields to current user
+                        setEditedFirstName(user.firstName);
+                        setEditedLastName(user.lastName);
+                        setEditedEmail(user.email);
                       }}
                     >
                       Cancel
                     </Button>
                     <Button
                       variant="primary"
-                      type="submit"
+                      onClick={handleSave}
                       disabled={isLoading}
                     >
                       {isLoading ? "Saving..." : "Save Changes"}
@@ -154,7 +181,9 @@ export default function ProfilePage() {
                     variant="outline"
                     onClick={() => {
                       setIsEditing(true);
-                      setEditedUser({ ...user });
+                      setEditedFirstName(user.firstName);
+                      setEditedLastName(user.lastName);
+                      setEditedEmail(user.email);
                     }}
                   >
                     Edit Profile

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { resourceService } from "@/services/resourceService";
-import { Button } from "@/components/common/Button";
+import Button from "@/components/common/Button";
 
 export default function ResourceDetailPage() {
   const { id } = useParams<{ id: string }>();

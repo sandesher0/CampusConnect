@@ -4,7 +4,7 @@ import Link from "next/link";
 import { resourceService } from "@/services/resourceService";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/common/Button";
+import Button from "@/components/common/Button";
 
 export default function ResourcesPage() {
   const searchParams = useSearchParams();
@@ -122,7 +122,7 @@ export default function ResourcesPage() {
         </div>
 
         {/* Resources grid */}
-        {resources.length === 0 && status !== "loading" ? (
+        {resources.length === 0 && status === "success" ? (
           <div className="text-center py-12">
             <p className="text-gray-500">
               No resources found matching your criteria.

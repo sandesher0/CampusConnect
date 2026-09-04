@@ -1,4 +1,5 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Base Layout
+import Link from "next/link";
 
 export default function Footer() {
   return (
