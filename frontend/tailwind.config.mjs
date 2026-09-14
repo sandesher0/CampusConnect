@@ -2,7 +2,7 @@
 export default {
   darkMode: ['class'],
   content: [
-    './src/**/*.{ts,tsx}',
+    './frontend/src/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {

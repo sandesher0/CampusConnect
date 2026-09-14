@@ -12,19 +12,22 @@
 
 # testing
 /coverage
+/frontend/coverage
 
 # next.js
 /.next/
 /out/
+/frontend/.next/
+/frontend/out/
 
 # production
 /build
+/frontend/build
 
 # misc
 .DS_Store
 *.pem
 /docs
-*.md
 
 # debug
 npm-debug.log*
@@ -41,3 +44,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backend (dotnet)
+/backend/bin/
+/backend/obj/
+/backend/*.csproj.user
+/backend/*.vspscc
