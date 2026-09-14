@@ -1,56 +1,101 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+=========================
+.NET / Visual Studio
+=========================
+Build output
 
-# dependencies
-/frontend/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+**/bin/
+**/obj/
 
-# testing
-/coverage
-/frontend/coverage
+Visual Studio
 
-# next.js
-/.next/
-/out/
-/frontend/.next/
-/frontend/out/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-# production
-/build
-/frontend/build
+Rider / JetBrains
 
-# misc
+.idea/
+*.sln.iml
+
+VS Code
+
+.vscode/
+
+=========================
+NuGet
+=========================
+
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+**/packages.lock.json
+
+=========================
+Logs
+=========================
+
+*.log
+logs/
+
+=========================
+Test results / coverage
+=========================
+
+TestResults/
+.trx
+coverage/
+coverage.json
+coverage*.xml
+*.coverage
+*.coveragexml
+
+=========================
+ASP.NET / Local settings
+=========================
+Local development settings
+
+appsettings.Local.json
+appsettings.*.Local.json
+
+User secrets
+
+secrets.json
+
+=========================
+OS files
+=========================
+
 .DS_Store
-*.pem
-/docs
+Thumbs.db
+Desktop.ini
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+=========================
+Temporary files
+=========================
 
-# env files (can opt-in for committing if needed)
-.env*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
-# vercel
-.vercel
+=========================
+Environment / secrets
+=========================
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+.env
+.env.*
+!.env.example
 
-# backend (dotnet)
-/backend/bin/
-/backend/obj/
-/backend/*.csproj.user
-/backend/*.vspscc
+=========================
+Database / local data
+=========================
 
-# Project documentation and Claude-related files (typically not committed to repo)
-*.md
-.claude/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
