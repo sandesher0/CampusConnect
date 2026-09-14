@@ -50,3 +50,7 @@ next-env.d.ts
 /backend/obj/
 /backend/*.csproj.user
 /backend/*.vspscc
+
+# Project documentation and Claude-related files (typically not committed to repo)
+*.md
+.claude/
