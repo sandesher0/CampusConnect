@@ -1,8 +1,45 @@
+using API.ExceptionHandlers;
+using Infrastructure;
+using Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Modules.Auth.Facades;
+using Modules.Auth.Ports;
+using SharedKernel.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Add MVC services for controllers
+builder.Services.AddControllers();
+
+// Exception Handling
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Dependency Injection
+builder.Services.AddScoped<
+    IUserRegistrationRepository,
+    UserRegistrationRepository>();
+
+builder.Services.AddScoped<
+    IUserRegistrationFacade,
+    UserRegistrationFacade>();
+
+
+builder.Services.AddSingleton<
+    IPasswordHasher,
+    PasswordHasher>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
+
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString(
+            "DefaultConnection"));
+});
 
 var app = builder.Build();
 
@@ -12,30 +49,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Global Exception Handler
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
