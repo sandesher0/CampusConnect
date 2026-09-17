@@ -1,9 +1,9 @@
 namespace SharedKernel.Interfaces;
 
-public interface IBaseRepository<T> where T : class
+public interface IBaseRepository<TEntity> where TEntity : class
 {
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task AddAsync(T domain, CancellationToken cancellationToken);
-    Task UpdateAsync(T domain, CancellationToken cancellationToken);
-    Task DeleteAsync(T domain, CancellationToken cancellationToken);
+    Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 }
