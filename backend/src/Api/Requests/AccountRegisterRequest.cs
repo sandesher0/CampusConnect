@@ -2,7 +2,15 @@ namespace API.Requests;
 
 public class AccountRegisterRequest
 {
-    public required string Username { get; set; }
-    public required string Email { get; set; }
-    public required string Password { get; set; }
+    public required string Username { get; init; }
+
+    public required string Email { get; init; }
+
+    public required string Password { get; init; }
+
+    public required string FirstName { get; init; }
+
+    public required string LastName { get; init; }
+
+    public string? PhoneNumber { get; init; }
 }

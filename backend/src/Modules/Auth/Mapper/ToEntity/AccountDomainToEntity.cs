@@ -10,9 +10,10 @@ public static class AccountDomainToEntity
         return new AccountEntity
         {
             Id = Guid.CreateVersion7(),
-            Email = domain.Email,
+            UserId = Guid.CreateVersion7(),
             Username = domain.Username,
             PasswordHash = domain.PasswordHash,
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

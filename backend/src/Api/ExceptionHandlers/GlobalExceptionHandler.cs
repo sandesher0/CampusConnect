@@ -29,6 +29,17 @@ public class GlobalExceptionHandler : IExceptionHandler
                 detail: exception.Message).ExecuteAsync(httpContext);
             return true;
         }
+
+        if (exception is InvalidCredentialsException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Account not found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+        }
+
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,

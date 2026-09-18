@@ -1,0 +1,39 @@
+using Microsoft.Extensions.Logging;
+using Modules.Auth.Ports;
+using Modules.Auth.Domain;
+using Modules.Auth.Mapper.ToEntity;
+using SharedKernel.Interfaces;
+using SharedKernel.Exceptions;
+
+namespace Modules.Auth.Facades;
+
+public class AccountRegistrationFacade : IAccountRegistrationFacade
+{
+    private readonly IAccountRepository accountRepository;
+    private readonly ILogger<AccountRegistrationFacade> logger;
+    private readonly IUnitOfWork unitOfWork;
+
+    public AccountRegistrationFacade(IAccountRepository accountRepository, ILogger<AccountRegistrationFacade> logger, IUnitOfWork unitOfWork)
+    {
+        this.accountRepository = accountRepository;
+        this.logger = logger;
+        this.unitOfWork = unitOfWork;
+    }
+
+    public async Task HandleAsync(Account account, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Starting Account Creation for {Username}", account.Username);
+
+        var accountExists = await accountRepository.GetByUsernameAsync(account.Username, cancellationToken);
+        if (accountExists is not null)
+        {
+            logger.LogInformation("Account already exists for provided {Username}", account.Username);
+            throw new AccountAlreadyExistsException(account.Username);
+        }
+
+        var newAccount = AccountDomainToEntity.ToEntity(account);
+        await accountRepository.AddAsync(newAccount, cancellationToken);
+        
+        logger.LogInformation("Created a new Account for {Username}", account.Username);
+    }
+}

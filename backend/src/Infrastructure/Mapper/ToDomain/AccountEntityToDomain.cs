@@ -10,7 +10,7 @@ public static class AccountToDomain
         return new Account
         {
             Id = entity.Id,
-            Email = entity.Email,
+            UserId = entity.UserId,
             Username = entity.Username,
             PasswordHash = entity.PasswordHash,
             AccountVerifiedAt = entity.AccountVerifiedAt,

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Auth\Auth.csproj" />
+    <ProjectReference Include="..\Modules\Users\Users.csproj" />
   </ItemGroup>
 
   <ItemGroup>
