@@ -3,7 +3,7 @@ using SharedKernel.Entities;
 
 namespace Infrastructure.Mapper.ToDomain;
 
-public static class AccountToDomain
+public static class AccountEntityToDomain
 {
     public static Account ToDomain(AccountEntity entity)
     {

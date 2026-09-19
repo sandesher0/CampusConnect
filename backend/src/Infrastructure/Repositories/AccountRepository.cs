@@ -31,7 +31,7 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
         var account = await dbSet.AsNoTracking().SingleOrDefaultAsync(a => a.Username == username);
         if (account is null)
             return null;
-        return AccountToDomain.ToDomain(account);
+        return AccountEntityToDomain.ToDomain(account);
     }
 
 }

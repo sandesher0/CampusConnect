@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Modules.Auth.Facades;
+using Modules.Auth.Services;
 using Modules.Auth.Options;
 using Modules.Auth.Ports;
 using Modules.Users.Facades;

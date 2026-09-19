@@ -2,6 +2,7 @@ using Application.Domain;
 using Application.Ports;
 using Microsoft.Extensions.Logging;
 using Modules.Auth.Ports;
+using SharedKernel.Exceptions;
 
 namespace Application.Facades;
 
@@ -24,7 +25,7 @@ public class GetCurrentUserFacade : IGetCurrentUserFacade
         if (accountInfo is null)
         {
             logger.LogInformation("No Account found for account id {AccountId}", accountId);
-            throw new InvalidOperationException("Account not found");
+            throw new AccountNotFoundException(accountId);
         }
 
         return new AccountInfo
@@ -40,7 +41,7 @@ public class GetCurrentUserFacade : IGetCurrentUserFacade
                 FirstName = accountInfo.User.FirstName,
                 LastName = accountInfo.User.LastName,
                 PhoneNumber = accountInfo.User.PhoneNumber,
-                ProfileImageUrl = accountInfo.User.PhoneNumber
+                ProfileImageUrl = accountInfo.User.ProfileImageUrl
             }
         };
     }
