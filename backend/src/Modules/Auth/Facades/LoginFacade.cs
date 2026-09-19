@@ -29,17 +29,17 @@ public class LoginFacade : IAccountLoginFacade
         CancellationToken cancellationToken)
     {
         logger.LogInformation(
-            "Login attempt for account with email {Email}",
-            login.Email);
+            "Login attempt for account with Username {Username}",
+            login.Username);
 
         var account = await accountRepository
-            .GetByEmailAsync(login.Email, cancellationToken);
+            .GetByUsernameAsync(login.Username, cancellationToken);
 
         if (account is null)
         {
             logger.LogWarning(
                 "Login failed: account not found for email {Email}",
-                login.Email);
+                login.Username);
 
             throw new InvalidCredentialsException();
         }
@@ -51,8 +51,8 @@ public class LoginFacade : IAccountLoginFacade
         if (!isPasswordMatch)
         {
             logger.LogWarning(
-                "Login failed: invalid password for email {Email}",
-                login.Email);
+                "Login failed: invalid password for Username {Username}",
+                login.Username);
 
             throw new InvalidCredentialsException();
         }
@@ -61,7 +61,7 @@ public class LoginFacade : IAccountLoginFacade
 
         logger.LogInformation(
             "Login successful for account with email {Email}",
-            login.Email);
+            login.Username);
 
         return accessToken;
     }

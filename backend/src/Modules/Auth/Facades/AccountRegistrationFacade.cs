@@ -26,12 +26,12 @@ public class AccountRegistrationFacade : IAccountRegistrationFacade
         if (accountExists is not null)
         {
             logger.LogInformation("Account already exists for provided {Username}", account.Username);
-            throw new AccountAlreadyExistsException(account.Username);
+            throw new UsernameAlreadyTakenException(account.Username);
         }
 
         var newAccount = AccountDomainToEntity.ToEntity(account);
         await accountRepository.AddAsync(newAccount, cancellationToken);
-        
+
         logger.LogInformation("Created a new Account for {Username}", account.Username);
     }
 }

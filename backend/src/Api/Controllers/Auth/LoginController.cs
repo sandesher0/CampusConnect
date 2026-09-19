@@ -22,7 +22,7 @@ public class LoginController : ControllerBase
     {
         var login = new Login
         {
-            Email = loginRequest.Email,
+            Username = loginRequest.Username,
             Password = loginRequest.Password,
         };
         var accessToken = await loginFacade.HandleAsync(login, cancellationToken);

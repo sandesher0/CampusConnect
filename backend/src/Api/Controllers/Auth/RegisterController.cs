@@ -9,11 +9,11 @@ namespace Api.Controllers.Auth;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class RegisterController : ControllerBase
 {
     private readonly IRegisterUserUseCase registerUserUseCase;
 
-    public AuthController(
+    public RegisterController(
         IRegisterUserUseCase registerUserUseCase)
     {
         this.registerUserUseCase = registerUserUseCase;

@@ -1,8 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SharedKernel.Entities;
 
 public class UserEntity
 
 {
+    [Key]
     public Guid Id { get; set; }
 
     public required string Email { get; set; }
@@ -16,6 +19,4 @@ public class UserEntity
     public required DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset DeletedAt { get; set; }
-
-    public virtual AccountEntity Account { get; set; } = default!;
 }

@@ -1,10 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace SharedKernel.Entities;
 
 public class AccountEntity
 {
+    [Key]
     public Guid Id { get; set; }
 
     public required Guid UserId { get; set; }
+
+    [ForeignKey(nameof(UserId))]
+    public virtual UserEntity User { get; set; } = default!;
 
     public string Username { get; set; } = default!;
 

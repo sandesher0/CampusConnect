@@ -9,8 +9,8 @@ public static class AccountDomainToEntity
     {
         return new AccountEntity
         {
-            Id = Guid.CreateVersion7(),
-            UserId = Guid.CreateVersion7(),
+            Id = domain.Id,
+            UserId = domain.UserId,
             Username = domain.Username,
             PasswordHash = domain.PasswordHash,
             CreatedAt = DateTimeOffset.UtcNow

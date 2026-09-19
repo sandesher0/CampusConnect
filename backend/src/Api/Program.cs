@@ -1,5 +1,6 @@
 using System.Text;
 using API.ExceptionHandlers;
+using Application.Ports;
 using Infrastructure;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -50,9 +51,11 @@ builder.Services.AddSingleton<
     IPasswordHasher,
     PasswordHasher>();
 
-builder.Services.AddScoped<
+builder.Services.AddSingleton<
     ITokenGenerator,
     TokenGenerator>();
+
+builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
 

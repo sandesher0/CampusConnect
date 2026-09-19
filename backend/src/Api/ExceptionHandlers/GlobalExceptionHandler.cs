@@ -30,6 +30,18 @@ public class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        if (exception is UsernameAlreadyTakenException)
+        {
+            httpContext.Response.StatusCode =
+              StatusCodes.Status409Conflict;
+
+            await Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Username already Taken",
+                detail: exception.Message).ExecuteAsync(httpContext);
+            return true;
+        }
+
         if (exception is InvalidCredentialsException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;

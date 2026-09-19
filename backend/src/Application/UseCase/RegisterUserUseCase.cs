@@ -25,6 +25,7 @@ public class RegisterUserUseCase : IRegisterUserUseCase
     {
         this.accountRegistrationFacade = accountRegistrationFacade;
         this.userRegistrationFacade = userRegistrationFacade;
+        this.passwordHasher = passwordHasher;
         this.unitOfWork = unitOfWork;
         this.logger = logger;
     }

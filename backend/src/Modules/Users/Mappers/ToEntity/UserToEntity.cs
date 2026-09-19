@@ -9,7 +9,7 @@ public static class UserDomainToEntity
     {
         return new UserEntity
         {
-            Id = Guid.CreateVersion7(),
+            Id = domain.Id,
             Email = domain.Email,
             FirstName = domain.FirstName,
             LastName = domain.LastName,

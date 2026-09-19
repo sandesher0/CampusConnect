@@ -21,12 +21,5 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
             return null;
         return AccountToDomain.ToDomain(account);
     }
-    
-    public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken)
-    {
-        var userEntity = await dbContext.Set<UserEntity>().Include(u => u.Account).AsNoTracking().SingleOrDefaultAsync(u => u.Email == email);
-        if (userEntity is null || userEntity.Account is null)
-            return null;
-        return AccountToDomain.ToDomain(userEntity.Account);
-    }
+
 }
