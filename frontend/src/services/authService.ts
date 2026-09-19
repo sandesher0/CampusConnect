@@ -1,7 +1,7 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: API Layer
 import apiClient from "@/config/apiClient";
 import { z } from "zod";
-import jwtDecode from "jwt-decode";
+import { userService } from "./userService";
 
 // Auth schemas - adjusted to match actual backend responses
 export const LoginResponseSchema = z.object({
@@ -30,34 +30,17 @@ export type User = z.infer<typeof UserSchema>;
 
 // Auth service functions
 export const authService = {
-  login: async (username: string, password: string): Promise<{ accessToken: string; user?: User }> => {
-    const res = await apiClient.post("/auth/login", {
+  login: async (username: string, password: string): Promise<{ accessToken: string; user: User }> => {
+    // Step 1: Login to get access token
+    const loginRes = await apiClient.post("/auth/login", {
       username,
       password,
     });
-    const loginResponse = LoginResponseSchema.parse(res.data);
+    const loginResponse = LoginResponseSchema.parse(loginRes.data);
     const accessToken = loginResponse.accessToken;
 
-    // Try to decode JWT to get user information
-    let user: User | undefined;
-    try {
-      const decoded: any = jwtDecode(accessToken);
-      // Map decoded token to User schema
-      user = {
-        id: decoded.sub || decoded.id || "",
-        email: decoded.email || "",
-        firstName: decoded.firstName || "",
-        lastName: decoded.lastName || "",
-        role: (decoded.role || decoded.rol || "student") as "student" | "admin" | "moderator",
-        isActive: decoded.isActive !== undefined ? !!decoded.isActive : true,
-        createdAt: decoded.createdAt || new Date().toISOString(),
-        updatedAt: decoded.updatedAt || new Date().toISOString(),
-      };
-    } catch (error) {
-      console.warn("Failed to decode JWT token:", error);
-      // If we can't decode token, we'll rely on having just the token for now
-      // The user information may need to be fetched separately if needed
-    }
+    // Step 2: Get user information using the token
+    const user = await userService.getCurrentUser();
 
     return { accessToken, user };
   },
@@ -69,8 +52,9 @@ export const authService = {
     email: string,
     password: string,
     role: string = "student"
-  ): Promise<{ accessToken?: string; user?: User }> => {
-    const res = await apiClient.post("/auth/register", {
+  ): Promise<{ accessToken: string; user: User }> => {
+    // Step 1: Register the new user
+    await apiClient.post("/auth/register", {
       username,
       firstName,
       lastName,
@@ -78,21 +62,19 @@ export const authService = {
       password,
       role,
     });
-    const registerResponse = RegisterResponseSchema.parse(res.data);
 
-    // Register endpoint only returns a message, not a token
-    // This suggests we might need to login after registration to get the token
-    // Or the token might be in a different format than expected
+    // Step 2: Login with the newly created credentials to get token
+    const loginRes = await apiClient.post("/auth/login", {
+      username,
+      password,
+    });
+    const loginResponse = LoginResponseSchema.parse(loginRes.data);
+    const accessToken = loginResponse.accessToken;
 
-    console.log("Registration response:", registerResponse);
+    // Step 3: Get user information using the token
+    const user = await userService.getCurrentUser();
 
-    // For now, return empty object - caller may need to handle this appropriately
-    // In a real implementation, we might:
-    // 1. Automatically login after registration
-    // 2. Expect the token to be returned in a different way
-    // 3. Have a separate endpoint to get token after registration
-
-    return {};
+    return { accessToken, user };
   },
 
   // Additional methods can be added as needed (e.g., logout, refreshToken)
