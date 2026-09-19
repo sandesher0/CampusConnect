@@ -3,14 +3,14 @@ using SharedKernel.Entities;
 
 namespace Infrastructure.Mapper.ToDomain;
 
-public static class AccountToDomain
+public static class AccountEntityToDomain
 {
     public static Account ToDomain(AccountEntity entity)
     {
         return new Account
         {
             Id = entity.Id,
-            Email = entity.Email,
+            UserId = entity.UserId,
             Username = entity.Username,
             PasswordHash = entity.PasswordHash,
             AccountVerifiedAt = entity.AccountVerifiedAt,

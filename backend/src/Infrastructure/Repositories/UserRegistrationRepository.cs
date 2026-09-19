@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using Modules.Auth.Domain;
-using Modules.Auth.Ports;
+using Modules.Users.Domain;
+using Modules.Users.Ports;
 using SharedKernel.Entities;
-using Infrastructure.Mapper.ToDomain;
 
 namespace Infrastructure.Repositories;
 
-public class UserRegistrationRepository : BaseRepository<AppDbContext, AccountEntity>, IUserRegistrationRepository
+public class UserRegistrationRepository : BaseRepository<AppDbContext, UserEntity>, IUserRegistrationRepository
 {
     private readonly AppDbContext dbContext;
     public UserRegistrationRepository(AppDbContext dbContext) : base(dbContext)
@@ -14,12 +13,20 @@ public class UserRegistrationRepository : BaseRepository<AppDbContext, AccountEn
         this.dbContext = dbContext;
     }
 
-    public async Task<Account?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<User?> FindByEmailAsync(string email, CancellationToken cancellationToken)
     {
-        var account = await dbSet.AsNoTracking().SingleOrDefaultAsync(a => a.Email == email);
-        if (account is null)
+        var userEntity = await dbSet.AsNoTracking().SingleOrDefaultAsync(u => u.Email == email);
+        if (userEntity is null)
             return null;
-        return AccountToDomain.ToDomain(account);
-
+            
+        return new User 
+        {
+            Id = userEntity.Id,
+            Email = userEntity.Email,
+            FirstName = userEntity.FirstName,
+            LastName = userEntity.LastName,
+            PhoneNumber = userEntity.PhoneNumber,
+            ProfileImageUrl = userEntity.ProfileImageUrl,
+        };
     }
 }
