@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
 
     public DbSet<AccountEntity> Account => Set<AccountEntity>();
     public DbSet<UserEntity> User => Set<UserEntity>();
+    public DbSet<CommunityEntity> Community => Set<CommunityEntity>();
+    public DbSet<CommunityMemberEntity> CommunityMember => Set<CommunityMemberEntity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

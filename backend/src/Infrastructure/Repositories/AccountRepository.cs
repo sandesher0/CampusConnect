@@ -33,5 +33,15 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
             return null;
         return AccountEntityToDomain.ToDomain(account);
     }
+    public async Task<Guid?> GetUserIdByAccountIdAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var entity = await dbSet.AsNoTracking().Where(a => a.Id == accountId).SingleOrDefaultAsync(cancellationToken);
+        if (entity is null)
+        {
+            return null;
+        }
+        return entity.UserId;
+    }
+
 
 }
