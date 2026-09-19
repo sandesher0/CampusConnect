@@ -27,8 +27,6 @@ public class UserRegistrationRepository : BaseRepository<AppDbContext, UserEntit
             LastName = userEntity.LastName,
             PhoneNumber = userEntity.PhoneNumber,
             ProfileImageUrl = userEntity.ProfileImageUrl,
-            CreatedAt = userEntity.CreatedAt,
-            UpdatedAt = userEntity.UpdatedAt
         };
     }
 }

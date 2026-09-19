@@ -5,10 +5,10 @@ public class Account
     public Guid Id { get; set; }
 
     public required Guid UserId { get; set; }
-    public string Username { get; set; } = default!;
+    public required string Username { get; set; } = default!;
 
 
-    public string PasswordHash { get; set; } = default!;
+    public required string PasswordHash { get; set; } = default!;
 
     public bool IsActive { get; set; } = true;
     public DateTimeOffset? AccountVerifiedAt { get; set; }

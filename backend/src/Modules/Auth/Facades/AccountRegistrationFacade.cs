@@ -11,13 +11,11 @@ public class AccountRegistrationFacade : IAccountRegistrationFacade
 {
     private readonly IAccountRepository accountRepository;
     private readonly ILogger<AccountRegistrationFacade> logger;
-    private readonly IUnitOfWork unitOfWork;
-
-    public AccountRegistrationFacade(IAccountRepository accountRepository, ILogger<AccountRegistrationFacade> logger, IUnitOfWork unitOfWork)
+    public AccountRegistrationFacade(IAccountRepository accountRepository, ILogger<AccountRegistrationFacade> logger)
     {
         this.accountRepository = accountRepository;
         this.logger = logger;
-        this.unitOfWork = unitOfWork;
+
     }
 
     public async Task HandleAsync(Account account, CancellationToken cancellationToken)

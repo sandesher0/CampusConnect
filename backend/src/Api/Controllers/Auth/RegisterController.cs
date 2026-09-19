@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
-using Modules.Auth.Domain;
-using Modules.Users.Ports;
-using Modules.Users.Domain;
 using API.Requests;
 using SharedKernel.Interfaces;
+using Application.Domain;
+using Application.Ports;
 
 namespace Api.Controllers.Auth;
 
@@ -12,37 +11,29 @@ namespace Api.Controllers.Auth;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IUserRegistrationFacade userRegistrationFacade;
-    private readonly IAccountRegistrationFacade accountRegistrationFacade;
-    private readonly IPasswordHasher passwordHasher;
-    private readonly IUnitOfWork unitOfWork;
+    private readonly IRegisterUserUseCase registerUserUseCase;
 
     public AuthController(
-        IUserRegistrationFacade userRegistrationFacade,
-        IAccountRegistrationFacade accountRegistrationFacade,
-        IPasswordHasher passwordHasher,
-        IUnitOfWork unitOfWork)
+        IRegisterUserUseCase registerUserUseCase)
     {
-        this.userRegistrationFacade = userRegistrationFacade;
-        this.accountRegistrationFacade = accountRegistrationFacade;
-        this.passwordHasher = passwordHasher;
-        this.unitOfWork = unitOfWork;
+        this.registerUserUseCase = registerUserUseCase;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] AccountRegisterRequest request, CancellationToken cancellationToken)
     {
-        var hashedPassword = await passwordHasher.HashPassword(request.Password);
-        var user = new User
+        var newAccount = new RegisterAccount
         {
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
             PhoneNumber = request.PhoneNumber,
+            Username = request.Username,
+            Password = request.Password,
         };
 
 
-        await userRegistrationFacade.HandleAsync(user, cancellationToken);
+        await registerUserUseCase.ExecuteAsync(newAccount, cancellationToken);
         return Ok(new { message = "Registration successful" });
     }
 }
