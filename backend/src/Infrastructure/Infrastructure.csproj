@@ -4,6 +4,7 @@
     <ProjectReference Include="..\SharedKernel\SharedKernel.csproj" />
     <ProjectReference Include="..\Modules\Auth\Auth.csproj" />
     <ProjectReference Include="..\Modules\Users\Users.csproj" />
+    <ProjectReference Include="..\Modules\Communities\Communities.csproj" />
   </ItemGroup>
 
   <ItemGroup>

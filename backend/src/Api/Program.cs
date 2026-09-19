@@ -15,6 +15,8 @@ using Modules.Auth.Ports;
 using Modules.Users.Facades;
 using Modules.Users.Ports;
 using SharedKernel.Interfaces;
+using Modules.Communities.Ports;
+using Modules.Communities.Facades;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +67,21 @@ builder.Services.AddScoped<
     IGetCurrentUserFacade,
     GetCurrentUserFacade>();
 
+builder.Services.AddScoped<
+    IGetUserIdByAccountIdFacade,
+    GetUserIdByAccountIdFacade>();
+
+builder.Services.AddScoped<
+    ICreateCommunityFacade,
+    CreateCommunityFacade>();
+
+builder.Services.AddScoped<
+    ICommunityRepository,
+    CommunityRepository>();
+
+builder.Services.AddScoped<
+    ICommunityMemberRepository,
+    CommunityMemberRepository>();
 
 builder.Services.AddSingleton<
     IPasswordHasher,
