@@ -14,6 +14,18 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
         this.dbContext = dbContext;
     }
 
+
+    public override async Task<AccountEntity?> GetByIdAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var account = await dbSet.AsNoTracking().Where(a => a.Id == accountId).Include(u => u.User).SingleOrDefaultAsync(cancellationToken);
+
+        if (account is null)
+        {
+            return null;
+        }
+        return account;
+    }
+
     public async Task<Account?> GetByUsernameAsync(string username, CancellationToken cancellationToken)
     {
         var account = await dbSet.AsNoTracking().SingleOrDefaultAsync(a => a.Username == username);

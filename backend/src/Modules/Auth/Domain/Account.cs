@@ -17,5 +17,4 @@ public class Account
     public int FailedLoginAttempts { get; set; }
     public List<string>? RefreshToken { get; set; }
 
-
 }

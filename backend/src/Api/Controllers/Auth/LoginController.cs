@@ -18,7 +18,7 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<string> Login(LoginRequest loginRequest, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(LoginRequest loginRequest, CancellationToken cancellationToken)
     {
         var login = new Login
         {
@@ -27,6 +27,17 @@ public class LoginController : ControllerBase
         };
         var accessToken = await loginFacade.HandleAsync(login, cancellationToken);
 
-        return accessToken;
+        Response.Cookies.Append(
+            "accessToken",
+            accessToken,
+            new CookieOptions
+            {
+                SameSite = SameSiteMode.Lax,
+                HttpOnly = true,
+                Secure = true
+
+            }
+        );
+        return Ok();
     }
 }

@@ -38,7 +38,7 @@ public class LoginFacade : IAccountLoginFacade
         if (account is null)
         {
             logger.LogWarning(
-                "Login failed: account not found for email {Email}",
+                "Login failed: account not found for Username {Username}",
                 login.Username);
 
             throw new InvalidCredentialsException();
@@ -60,7 +60,7 @@ public class LoginFacade : IAccountLoginFacade
         var accessToken = tokenGenerator.GenerateJwtToken(account);
 
         logger.LogInformation(
-            "Login successful for account with email {Email}",
+            "Login successful for account with Username {Username}",
             login.Username);
 
         return accessToken;

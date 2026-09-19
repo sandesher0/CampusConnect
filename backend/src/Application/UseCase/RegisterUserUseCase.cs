@@ -7,6 +7,7 @@ using Modules.Users.Domain;
 using Modules.Auth.Domain;
 using SharedKernel.Interfaces;
 
+namespace Application.UseCase;
 
 public class RegisterUserUseCase : IRegisterUserUseCase
 {

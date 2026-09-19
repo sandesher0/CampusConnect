@@ -1,6 +1,8 @@
 using System.Text;
 using API.ExceptionHandlers;
+using Application.Facades;
 using Application.Ports;
+using Application.UseCase;
 using Infrastructure;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,11 +11,23 @@ using Microsoft.IdentityModel.Tokens;
 using Modules.Auth.Facades;
 using Modules.Auth.Options;
 using Modules.Auth.Ports;
+using Modules.Users.Facades;
+using Modules.Users.Ports;
 using SharedKernel.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 // Add MVC services for controllers
 builder.Services.AddControllers();
@@ -31,20 +45,24 @@ builder.Services.AddScoped<
     AccountRepository>();
 
 builder.Services.AddScoped<
-    Modules.Users.Ports.IUserRegistrationRepository,
+    IUserRegistrationRepository,
     UserRegistrationRepository>();
 
 builder.Services.AddScoped<
-    Modules.Auth.Ports.IAccountRegistrationFacade,
+    IAccountRegistrationFacade,
     AccountRegistrationFacade>();
 
 builder.Services.AddScoped<
-    Modules.Users.Ports.IUserRegistrationFacade,
-    Modules.Users.Facades.UserRegistrationFacade>();
+    IUserRegistrationFacade,
+    UserRegistrationFacade>();
 
 builder.Services.AddScoped<
     IAccountLoginFacade,
     LoginFacade>();
+
+builder.Services.AddScoped<
+    IGetCurrentUserFacade,
+    GetCurrentUserFacade>();
 
 
 builder.Services.AddSingleton<
@@ -58,6 +76,9 @@ builder.Services.AddSingleton<
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
+builder.Services.AddHttpContextAccessor();
+
+
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -84,6 +105,14 @@ builder.Services
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)),
         ClockSkew = TimeSpan.Zero,
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            context.Token = context.Request.Cookies["accessToken"];
+            return Task.CompletedTask;
+        }
+    };
 });
 
 var app = builder.Build();
@@ -98,6 +127,10 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
