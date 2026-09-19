@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
-using API.Requests;
+using Api.Requests;
 using SharedKernel.Interfaces;
 using Application.Domain;
 using Application.Ports;

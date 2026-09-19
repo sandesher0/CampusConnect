@@ -1,4 +1,4 @@
-namespace API.Requests;
+namespace Api.Requests;
 
 public class AccountRegisterRequest
 {

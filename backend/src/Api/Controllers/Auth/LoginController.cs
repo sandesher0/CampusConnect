@@ -1,5 +1,5 @@
 
-using API.Requests;
+using Api.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Domain;
 using Modules.Auth.Ports;

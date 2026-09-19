@@ -62,6 +62,16 @@ public class GlobalExceptionHandler : IExceptionHandler
             ).ExecuteAsync(httpContext);
         }
 
+        if (exception is UnauthorizedAccessException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await Results.Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Account not found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+        }
+
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,

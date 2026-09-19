@@ -74,6 +74,10 @@ builder.Services.AddSingleton<
     ITokenGenerator,
     TokenGenerator>();
 
+builder.Services.AddScoped<
+    IChangePasswordFacade,
+    ChangePasswordFacade>();
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();

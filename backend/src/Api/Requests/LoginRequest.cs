@@ -1,5 +1,5 @@
 
-namespace API.Requests;
+namespace Api.Requests;
 
 public class LoginRequest
 {
