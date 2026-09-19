@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterValues } from "@/validations/auth";
 import { useAuthStore } from "@/stores/authStore";
+import { authService } from "@/services/authService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -36,25 +37,15 @@ export default function RegisterPage() {
     setStoreLoading(true);
 
     try {
-      // In a real app, this would call an auth service
-      // For now, we'll simulate a successful registration
-      const mockToken = "mock-jwt-token";
-      const mockUser = {
-        id: "1",
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role as "student",
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // In a real app, we would store the user from the registration response
-      // For now, we'll just simulate login
-      const authStore = useAuthStore.getState();
-      authStore.login(mockToken, mockUser);
-
+      const { accessToken, user } = await authService.register(
+        data.username,
+        data.firstName,
+        data.lastName,
+        data.email,
+        data.password,
+        data.role
+      );
+      storeLogin(accessToken, user);
       router.push("/");
     } catch (err: any) {
       setError(err.message || "Registration failed");
@@ -83,6 +74,24 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              {...register("username")}
+              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus-indigo-600 sm:text-sm sm:leading-6 ${
+                errors.username ? "border-red-600" : ""
+              }`}
+              placeholder="Enter your username"
+            />
+            {errors.username && (
+              <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -119,24 +128,6 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
               )}
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register("email")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus-indigo-600 sm:text-sm sm:leading-6 ${
-                errors.email ? "border-red-600" : ""
-              }`}
-              placeholder="you@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
           </div>
 
           <div>
