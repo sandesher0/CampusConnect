@@ -18,5 +18,5 @@ public class UserEntity
 
     public required DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
-    public DateTimeOffset DeletedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
 }
