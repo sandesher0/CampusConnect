@@ -3,9 +3,14 @@ using System.Text.Json.Serialization;
 namespace SharedKernel.Constants;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum CommunityType
+public enum EventCategory
 {
     None,
-    Public,
-    Private
+    Academic,
+    Social,
+    Sports,
+    Cultural,
+    Career,
+    Volunteering,
+    Other,
 }

@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Modules\Users\Users.csproj" />
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Modules\Communities\Communities.csproj" />
+    <ProjectReference Include="..\Modules\Events\Events.csproj" />
   </ItemGroup>
 
 </Project>

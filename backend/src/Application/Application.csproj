@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules\Users\Users.csproj" />
     <ProjectReference Include="..\Modules\Auth\Auth.csproj" />
+    <ProjectReference Include="..\Modules\Events\Events.csproj" />
+    <ProjectReference Include="..\Modules\Communities\Communities.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
