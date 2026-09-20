@@ -17,6 +17,8 @@ using Modules.Users.Ports;
 using SharedKernel.Interfaces;
 using Modules.Communities.Ports;
 using Modules.Communities.Facades;
+using Modules.Events.Ports;
+using Modules.Events.Facades;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +85,17 @@ builder.Services.AddScoped<
     ICommunityMemberRepository,
     CommunityMemberRepository>();
 
+builder.Services.AddScoped<
+    IChangePasswordFacade,
+    ChangePasswordFacade>();
+
+builder.Services.AddScoped<
+    ICreateEventFacade,
+    CreateEventFacade>();
+builder.Services.AddScoped<
+    ICreateEventUseCase,
+    CreateEventUseCase>();
+
 builder.Services.AddSingleton<
     IPasswordHasher,
     PasswordHasher>();
@@ -91,9 +104,27 @@ builder.Services.AddSingleton<
     ITokenGenerator,
     TokenGenerator>();
 
+
+
 builder.Services.AddScoped<
-    IChangePasswordFacade,
-    ChangePasswordFacade>();
+    IEventRepository,
+    EventRepository>();
+
+builder.Services.AddScoped<
+    ICreateEventFacade,
+    CreateEventFacade>();
+
+builder.Services.AddScoped<
+    ICreateEventUseCase,
+    CreateEventUseCase>();
+
+builder.Services.AddScoped<
+    IGetUserIdByAccountIdFacade,
+    GetUserIdByAccountIdFacade>();
+
+builder.Services.AddScoped<
+    IEventRepository,
+    EventRepository>();
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
