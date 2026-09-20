@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 namespace SharedKernel.Constants;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum CommunityType
+public enum EventVisibility
 {
     None,
     Public,
-    Private
+    Private,
 }

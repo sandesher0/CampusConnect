@@ -43,7 +43,7 @@ public class CreateCommunityFacade : ICreateCommunityFacade
         var communityMemberDomain = new CommunityMember
         {
             CommunityId = communityEntity.Id,
-            MemberType = MemberType.Owner,
+            MemberType = MemberType.ClubOfficer,
             UserId = community.CreatedBy,
 
         };

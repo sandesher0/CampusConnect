@@ -3,7 +3,9 @@ namespace SharedKernel.Constants;
 public enum MemberType
 {
     None,
-    Owner,
-    Member
+    ClubOfficer,
+    Student,
+    ClubMember,
+    StudentAffairsStaff
 
 }

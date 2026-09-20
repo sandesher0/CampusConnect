@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Modules.Events.Domain;
 using Modules.Users.Domain;
 using SharedKernel.Entities;
 
@@ -14,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<UserEntity> User => Set<UserEntity>();
     public DbSet<CommunityEntity> Community => Set<CommunityEntity>();
     public DbSet<CommunityMemberEntity> CommunityMember => Set<CommunityMemberEntity>();
+    public DbSet<EventEntity> Event => Set<EventEntity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
