@@ -126,6 +126,10 @@ builder.Services.AddScoped<
     IEventRepository,
     EventRepository>();
 
+builder.Services.AddScoped<
+    IGetAllPublicCommunitiesFacade,
+    GetAllPublicCommunitiesFacade>();
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
