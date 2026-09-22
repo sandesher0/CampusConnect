@@ -137,7 +137,7 @@ function CommunityPageInner() {
               >
                 <div className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
                         <span className="text-gray-900 font-bold">{community.communityName.charAt(0)}</span>
                       </div>
