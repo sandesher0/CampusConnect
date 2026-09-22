@@ -7,13 +7,15 @@ export const EventSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  date: z.string().datetime(),
   location: z.string(),
-  organizerId: z.string(),
-  category: z.string(),
-  isPublic: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  communityId: z.string(),
+  createdBy: z.string(),
+  eventDate: z.string().datetime(),
+  eventEndDate: z.string().datetime(),
+  visibility: z.enum(["None", "Public", "Private"]),
+  category: z.enum(["None", "Academic", "Social", "Sports", "Cultural", "Career", "Volunteering", "Other"]),
+  createAt: z.string().datetime(),
+  updatedAt: z.string().datetime().optional().nullable(),
 });
 
 export type Event = z.infer<typeof EventSchema>;
@@ -21,26 +23,24 @@ export type Event = z.infer<typeof EventSchema>;
 // Service functions
 export const eventService = {
   getEvents: async (filters?: Record<string, any>): Promise<Event[]> => {
-    const res = await apiClient.get("/events", { params: filters });
+    const res = await apiClient.get("/event", { params: filters });
     return z.array(EventSchema).parse(res.data);
   },
 
   getEventById: async (id: string): Promise<Event> => {
-    const res = await apiClient.get(`/events/${id}`);
+    const res = await apiClient.get(`/event/${id}`);
     return EventSchema.parse(res.data);
   },
 
-  createEvent: async (data: Omit<Event, "id" | "createdAt" | "updatedAt">): Promise<Event> => {
-    const res = await apiClient.post("/events", data);
-    return EventSchema.parse(res.data);
+  createEvent: async (data: Omit<Event, "id" | "createdBy" | "createAt" | "updatedAt">): Promise<void> => {
+    await apiClient.post("/event/create", data);
   },
 
-  updateEvent: async (id: string, data: Partial<Event>): Promise<Event> => {
-    const res = await apiClient.patch(`/events/${id}`, data);
-    return EventSchema.parse(res.data);
+  updateEvent: async (id: string, data: Partial<Event>): Promise<void> => {
+    await apiClient.patch(`/event/${id}`, data);
   },
 
   deleteEvent: async (id: string): Promise<void> => {
-    await apiClient.delete(`/events/${id}`);
+    await apiClient.delete(`/event/${id}`);
   },
 };
