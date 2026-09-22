@@ -2,7 +2,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { communityService } from "@/services/communityService";
 import { useSearchParams } from "next/navigation";
@@ -23,26 +23,16 @@ function CommunityPageInner() {
   const [category, setCategory] = useState(searchParams.get("category") || "");
 
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: communities = [],
     status,
     error,
-  } = useInfiniteQuery({
+  } = useQuery({
     queryKey: ["communities", { search, category }],
-    queryFn: ({ pageParam = 1 }) =>
+    queryFn: () =>
       communityService.getCommunities({
         search,
         category,
-        page: pageParam,
-        limit: 10,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < 10) return undefined;
-      return allPages.length + 1;
-    },
-    initialPageParam: 1,
   });
 
   if (status === "error") {
@@ -60,8 +50,6 @@ function CommunityPageInner() {
       </div>
     );
   }
-
-  const communities = data?.pages.flatMap((page) => page) || [];
 
   return (
     <div className="min-h-[calc(100vh-160px)] py-12">
@@ -194,18 +182,6 @@ function CommunityPageInner() {
           </div>
         )}
 
-        {/* Load more button */}
-        {hasNextPage && (
-          <div className="flex justify-center mt-8">
-            <Button
-              variant="outline"
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? "Loading..." : "Load More Communities"}
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );

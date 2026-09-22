@@ -6,11 +6,11 @@ import { z } from "zod";
 export const CommunitySchema = z.object({
   id: z.string(),
   communityName: z.string(),
-  communityType: z.enum(["None", "Public", "Private"]),
+  communityType: z.union([z.string(), z.number()]).transform(s => String(s)),
   createdBy: z.string(),
-  status: z.string(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime().optional(),
+  status: z.union([z.string(), z.number()]).transform(s => String(s)),
+  createdAt: z.string().datetime().optional().nullable(),
+  updatedAt: z.string().datetime().optional().nullable(),
 });
 
 export type Community = z.infer<typeof CommunitySchema>;
@@ -18,7 +18,7 @@ export type Community = z.infer<typeof CommunitySchema>;
 // Service functions
 export const communityService = {
   getCommunities: async (filters?: Record<string, any>): Promise<Community[]> => {
-    const res = await apiClient.get("/community", { params: filters });
+    const res = await apiClient.get("/communities/all", { params: filters });
     return z.array(CommunitySchema).parse(res.data);
   },
 
