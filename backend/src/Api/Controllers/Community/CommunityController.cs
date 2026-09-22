@@ -6,7 +6,7 @@ using Modules.Communities.Domain;
 using Modules.Communities.Ports;
 using SharedKernel.Exceptions;
 
-namespace Api.Controllers;
+namespace Api.Controllers.Communities;
 
 [ApiController]
 [Route("api/community")]
