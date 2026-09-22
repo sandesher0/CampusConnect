@@ -4,24 +4,23 @@ import { z } from "zod";
 import { userService } from "./userService";
 
 // Auth schemas - adjusted to match actual backend responses
-export const LoginResponseSchema = z.object({
-  accessToken: z.string(),
-});
+export const LoginResponseSchema = z.any();
 
 export const RegisterResponseSchema = z.object({
-  message: z.string(),
+  message: z.string().optional(),
 });
 
 // User schema (shared with userService)
 export const UserSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
-  firstName: z.string(),
-  lastName: z.string(),
-  role: z.enum(["student", "admin", "moderator"]),
-  isActive: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  userId: z.string(),
+  username: z.string(),
+  user: z.object({
+    id: z.string(),
+    email: z.string().email(),
+    firstName: z.string(),
+    lastName: z.string(),
+  })
 });
 
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
@@ -31,13 +30,13 @@ export type User = z.infer<typeof UserSchema>;
 // Auth service functions
 export const authService = {
   login: async (username: string, password: string): Promise<{ accessToken: string; user: User }> => {
-    // Step 1: Login to get access token
-    const loginRes = await apiClient.post("/auth/login", {
+    // Step 1: Login to get access token in cookie
+    await apiClient.post("/auth/login", {
       username,
       password,
     });
-    const loginResponse = LoginResponseSchema.parse(loginRes.data);
-    const accessToken = loginResponse.accessToken;
+    
+    const accessToken = "cookie-auth";
 
     // Step 2: Get user information using the token
     const user = await userService.getCurrentUser();
@@ -51,7 +50,6 @@ export const authService = {
     lastName: string,
     email: string,
     password: string,
-    role: string = "student"
   ): Promise<{ accessToken: string; user: User }> => {
     // Step 1: Register the new user
     await apiClient.post("/auth/register", {
@@ -60,22 +58,18 @@ export const authService = {
       lastName,
       email,
       password,
-      role,
     });
 
     // Step 2: Login with the newly created credentials to get token
-    const loginRes = await apiClient.post("/auth/login", {
+    await apiClient.post("/auth/login", {
       username,
       password,
     });
-    const loginResponse = LoginResponseSchema.parse(loginRes.data);
-    const accessToken = loginResponse.accessToken;
+    const accessToken = "cookie-auth";
 
     // Step 3: Get user information using the token
     const user = await userService.getCurrentUser();
 
     return { accessToken, user };
   },
-
-  // Additional methods can be added as needed (e.g., logout, refreshToken)
 };

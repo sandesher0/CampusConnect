@@ -5,13 +5,15 @@ import { z } from "zod";
 // User schema (will be shared with validations later)
 export const UserSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
-  firstName: z.string(),
-  lastName: z.string(),
-  role: z.enum(["student", "admin", "moderator"]),
-  isActive: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  userId: z.string(),
+  username: z.string(),
+  accountVerifiedAt: z.string().datetime().optional().nullable(),
+  user: z.object({
+    id: z.string(),
+    email: z.string().email(),
+    firstName: z.string(),
+    lastName: z.string(),
+  })
 });
 
 export type User = z.infer<typeof UserSchema>;
@@ -19,7 +21,7 @@ export type User = z.infer<typeof UserSchema>;
 // Service functions
 export const userService = {
   getCurrentUser: async (): Promise<User> => {
-    const res = await apiClient.get("/users/me");
+    const res = await apiClient.get("/user/me");
     return UserSchema.parse(res.data);
   },
 
