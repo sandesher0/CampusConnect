@@ -11,16 +11,20 @@ public class GetAllPublicCommunitiesController : ControllerBase
 {
     private readonly IGetAllPublicCommunitiesFacade getAllPublicCommunitiesFacade;
 
-    public GetAllPublicCommunitiesController(IGetAllPublicCommunitiesFacade getAllPublicCommunitiesFacade)
+    public GetAllPublicCommunitiesController(
+        IGetAllPublicCommunitiesFacade getAllPublicCommunitiesFacade)
     {
         this.getAllPublicCommunitiesFacade = getAllPublicCommunitiesFacade;
     }
 
     [Authorize]
     [HttpGet("all")]
-    public async Task<List<Community>?> HandleAsync(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<Community>>> HandleAsync(
+        CancellationToken cancellationToken)
     {
-        return await getAllPublicCommunitiesFacade.HandleAsync(cancellationToken);
-    }
+        var communities = await getAllPublicCommunitiesFacade
+            .HandleAsync(cancellationToken);
 
+        return Ok(communities);
+    }
 }

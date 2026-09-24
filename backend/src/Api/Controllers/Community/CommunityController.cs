@@ -25,7 +25,7 @@ public class CreateCommunityController : ControllerBase
 
     [Authorize]
     [HttpPost("create")]
-    public async Task<IActionResult> HandleAsync(CreateCommunityRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> HandleAsync(CreateCommunityRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
         {

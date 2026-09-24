@@ -10,4 +10,4 @@ public class CommunityMember
     public required Guid UserId {get;set;}
     public required MemberType MemberType { get; set; }
     
-}
+} 

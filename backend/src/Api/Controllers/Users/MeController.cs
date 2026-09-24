@@ -17,7 +17,7 @@ public class MeController : ControllerBase
     }
     [Authorize]
     [HttpGet("me")]
-    public async Task<IActionResult> HandleAsync(CancellationToken cancellationToken)
+    public async Task<ActionResult> HandleAsync(CancellationToken cancellationToken)
     {
         var accountId = User.FindFirst("sub")?.Value;
 

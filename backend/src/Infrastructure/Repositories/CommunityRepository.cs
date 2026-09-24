@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
 using SharedKernel.Entities;
+using SharedKernel.Constants;
 
 namespace Infrastructure.Repositories;
 
@@ -11,8 +12,8 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
 {
     public CommunityRepository(AppDbContext context) : base(context)
     {
+        
     }
-
     public async Task<List<Community>?> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken)
     {
         return await dbSet
