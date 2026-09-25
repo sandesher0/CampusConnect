@@ -32,11 +32,11 @@ export default function Button({
 
   // Variant classes
   const variantClasses = {
-    primary: "bg-primary-600 text-primary-foreground hover:bg-primary-700 focus:ring-primary-500",
-    secondary: "bg-secondary-600 text-secondary-foreground hover:bg-secondary-700 focus:ring-secondary-500",
-    outline: "border border-input hover:bg-accent hover:text-accent-foreground focus:ring-accent",
-    ghost: "hover:bg-accent hover:text-accent-foreground focus:ring-accent",
-    destructive: "bg-red-600 text-red-50 hover:bg-red-700 focus:ring-red-500",
+    primary: "bg-gray-900 text-white shadow-sm hover:bg-gray-800 focus:ring-gray-900",
+    secondary: "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 focus:ring-gray-300",
+    outline: "border border-gray-200 bg-white shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:ring-gray-300",
+    ghost: "hover:bg-gray-50 hover:text-gray-900 focus:ring-gray-300",
+    destructive: "bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-500",
   };
 
   // Size classes
