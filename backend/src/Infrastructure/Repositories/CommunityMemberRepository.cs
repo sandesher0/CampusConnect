@@ -25,4 +25,19 @@ public class CommunityMemberRepository : BaseRepository<AppDbContext, CommunityM
         }
         return CommunityMemberToDomain.ToDomain(communityMember);
     }
+
+    public async Task<List<CommunityMemberEntity>> GetByCommunityIdAsync(
+        Guid communityId,
+        CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .Where(x =>
+                x.CommunityId == communityId &&
+                x.DeletedAt == null)
+            .Include(x => x.User)
+            .ToListAsync(cancellationToken);
+    }
+
+
 }

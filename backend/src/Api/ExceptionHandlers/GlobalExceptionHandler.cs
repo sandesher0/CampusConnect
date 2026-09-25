@@ -72,6 +72,16 @@ public class GlobalExceptionHandler : IExceptionHandler
             ).ExecuteAsync(httpContext);
         }
 
+        if (exception is CommunityNotFoundException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Community not found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+        }
+
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,

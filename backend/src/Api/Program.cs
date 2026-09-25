@@ -19,6 +19,7 @@ using Modules.Communities.Ports;
 using Modules.Communities.Facades;
 using Modules.Events.Ports;
 using Modules.Events.Facades;
+using Communities.Ports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -129,6 +130,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IGetAllPublicCommunitiesFacade,
     GetAllPublicCommunitiesFacade>();
+
+builder.Services.AddScoped<
+    IGetCommunityFacade,
+    GetCommunityFacade>();
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
