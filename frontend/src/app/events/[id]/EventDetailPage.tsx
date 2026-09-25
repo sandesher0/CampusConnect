@@ -49,7 +49,7 @@ export default function EventDetailPage() {
           <div className="border-t border-gray-100 pt-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Organized by</h2>
             <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
                 {/* Organizer avatar would go here */}
                 <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </div>
