@@ -76,29 +76,26 @@ function ResourcesPageInner() {
         </div>
 
         {/* Search and filters */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search resources
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title or description..."
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
-              />
+        <div className="mb-8 bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+              </svg>
             </div>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search resources..."
+              className="block w-full rounded-md border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 shadow-sm"
+            />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category
-            </label>
+          <div className="w-full sm:w-64">
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 sm:text-sm"
+              className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 shadow-sm"
             >
               <option value="">All Categories</option>
               <option value="academics">Academics</option>
@@ -109,27 +106,17 @@ function ResourcesPageInner() {
               <option value="clubs">Clubs & Organizations</option>
             </select>
           </div>
-          <div className="flex items-end">
-            <Button
-              variant="outline"
+          {(search || category) && (
+            <button
               onClick={() => {
                 setSearch("");
                 setCategory("");
               }}
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 whitespace-nowrap px-2"
             >
-              Reset
-            </Button>
-          </div>
-          <div className="flex items-end justify-end">
-            <Button
-              variant="primary"
-              onClick={() => {
-                // Trigger refetch with new params
-              }}
-            >
-              Search
-            </Button>
-          </div>
+              Clear filters
+            </button>
+          )}
         </div>
 
         {/* Resources grid */}
