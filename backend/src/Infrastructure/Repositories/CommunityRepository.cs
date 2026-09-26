@@ -31,13 +31,4 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
                 .Select(x => CommunityEntityToDomain.ToDomain(x))
                 .ToListAsync(cancellationToken);
     }
-
-    public async Task<List<Community>?> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken)
-    {
-        return await dbSet
-        .AsNoTracking()
-        .Where(x => x.CommunityType == CommunityType.Public)
-        .Select(x => CommunityEntityToDomain.ToDomain(x))
-        .ToListAsync(cancellationToken);
-    }
 }

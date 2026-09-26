@@ -147,6 +147,19 @@ builder.Services.AddScoped<
     IGetAllPublicEventFacade,
     GetAllPublicEventFacade>();
 
+builder.Services.AddScoped<
+    IJoinPublicCommunityUseCase,
+    JoinPublicCommunityUseCase>();
+
+builder.Services.AddScoped<
+    IJoinPublicCommunityFacade,
+    JoinPublicCommunityFacade>();
+
+builder.Services.AddScoped<
+    ICommunityMembershipEligibilityFacade,
+    ICommunityMembershipEligibilityFacade>();
+
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
@@ -195,6 +208,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+   {
+       options.SwaggerEndpoint("/openapi/v1.json", "CampusConnect API v1");
+   });
 }
 
 // Global Exception Handler
