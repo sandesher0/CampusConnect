@@ -20,6 +20,17 @@ export const EventSchema = z.object({
 
 export type Event = z.infer<typeof EventSchema>;
 
+export type CreateEventPayload = {
+  title: string;
+  description: string;
+  location: string;
+  communityId: string;
+  eventDate: string;       // ISO DateTimeOffset
+  eventEndDate: string;    // ISO DateTimeOffset
+  visibility: "Public" | "Private";
+  category: "Academic" | "Social" | "Sports" | "Cultural" | "Career" | "Volunteering" | "Other";
+};
+
 // Service functions
 export const eventService = {
   getEvents: async (filters?: Record<string, any>): Promise<Event[]> => {
@@ -32,7 +43,7 @@ export const eventService = {
     return EventSchema.parse(res.data);
   },
 
-  createEvent: async (data: Omit<Event, "id" | "createdBy" | "createAt" | "updatedAt">): Promise<void> => {
+  createEvent: async (data: CreateEventPayload): Promise<void> => {
     await apiClient.post("/event/create", data);
   },
 

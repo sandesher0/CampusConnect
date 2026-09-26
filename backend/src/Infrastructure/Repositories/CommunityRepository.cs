@@ -12,14 +12,23 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
 {
     public CommunityRepository(AppDbContext context) : base(context)
     {
-        
+
     }
-    public async Task<List<Community>?> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken)
+    public async Task<List<Community>> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken)
     {
         return await dbSet
         .AsNoTracking()
         .Where(x => x.CommunityType == CommunityType.Public)
         .Select(x => CommunityEntityToDomain.ToDomain(x))
         .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Community>> GetMyCommunitiesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+                .AsNoTracking()
+                .Where(c => c.CreatedBy == userId)
+                .Select(x => CommunityEntityToDomain.ToDomain(x))
+                .ToListAsync(cancellationToken);
     }
 }
