@@ -61,12 +61,20 @@ function CommunityPageInner() {
               Public student organizations, clubs, and groups
             </p>
           </div>
-          <Link
-            href="/community/create"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
-          >
-            + Create Community
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/community/mine"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              My Communities
+            </Link>
+            <Link
+              href="/community/create"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
+            >
+              + Create Community
+            </Link>
+          </div>
         </div>
 
         {/* Search bar */}
