@@ -135,6 +135,10 @@ builder.Services.AddScoped<
     IGetCommunityFacade,
     GetCommunityFacade>();
 
+builder.Services.AddScoped<
+    IGetMyCommunitiesFacade,
+    GetMyCommunityFacade>();
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
