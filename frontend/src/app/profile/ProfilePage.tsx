@@ -73,7 +73,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center space-x-6">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">
                   <span className="text-gray-900 font-bold">
                     {(user.user.firstName ?? "")?.charAt(0) ?? ""}{(user.user.lastName ?? "")?.charAt(0) ?? ""}
