@@ -2,7 +2,7 @@ using SharedKernel.Constants;
 
 namespace SharedKernel.Response;
 
-public sealed class CommunityMemberResponse
+public sealed record CommunityMemberResponse
 {
     public required Guid MemberId { get; init; }
     public required Guid CommunityId { get; init; }
