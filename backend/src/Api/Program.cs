@@ -139,6 +139,10 @@ builder.Services.AddScoped<
     IGetMyCommunitiesFacade,
     GetMyCommunityFacade>();
 
+builder.Services.AddScoped<
+    IEnsureCanCreateEventFacade,
+    EnsureCanCreateEventFacade>();
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
