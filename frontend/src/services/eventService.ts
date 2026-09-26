@@ -2,7 +2,9 @@
 import apiClient from "@/config/apiClient";
 import { z } from "zod";
 
-// Event schema
+// EventResponse schema — matches GET /api/event/all response
+// Enums are serialized as strings via JsonStringEnumConverter
+// Dates are DateTimeOffset (ISO 8601 with offset)
 export const EventSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -10,12 +12,10 @@ export const EventSchema = z.object({
   location: z.string(),
   communityId: z.string(),
   createdBy: z.string(),
-  eventDate: z.string().datetime(),
-  eventEndDate: z.string().datetime(),
-  visibility: z.enum(["None", "Public", "Private"]),
-  category: z.enum(["None", "Academic", "Social", "Sports", "Cultural", "Career", "Volunteering", "Other"]),
-  createAt: z.string().datetime(),
-  updatedAt: z.string().datetime().optional().nullable(),
+  eventDate: z.string(),
+  eventEndDate: z.string(),
+  visibility: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  category: z.union([z.string(), z.number()]).transform((v) => String(v)),
 });
 
 export type Event = z.infer<typeof EventSchema>;
@@ -33,8 +33,9 @@ export type CreateEventPayload = {
 
 // Service functions
 export const eventService = {
-  getEvents: async (filters?: Record<string, any>): Promise<Event[]> => {
-    const res = await apiClient.get("/event", { params: filters });
+  // GET /api/event/all — returns List<EventResponse> (public events only)
+  getEvents: async (): Promise<Event[]> => {
+    const res = await apiClient.get("/event/all");
     return z.array(EventSchema).parse(res.data);
   },
 
@@ -43,6 +44,7 @@ export const eventService = {
     return EventSchema.parse(res.data);
   },
 
+  // POST /api/event/create
   createEvent: async (data: CreateEventPayload): Promise<void> => {
     await apiClient.post("/event/create", data);
   },
