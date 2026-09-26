@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Modules.Communities.Ports;
-using SharedKernel.Exceptions;
 using SharedKernel.Constants;
+using SharedKernel.Exceptions;
 
 namespace Modules.Communities.Facades;
 
@@ -9,12 +9,12 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
 {
     private readonly ICommunityRepository communityRepository;
     private readonly ICommunityMemberRepository communityMemberRepository;
-    private readonly ILogger<IEnsureCanCreateEventFacade> logger;
+    private readonly ILogger<EnsureCanCreateEventFacade> logger;
 
     public EnsureCanCreateEventFacade(
         ICommunityRepository communityRepository,
         ICommunityMemberRepository communityMemberRepository,
-        ILogger<IEnsureCanCreateEventFacade> logger)
+        ILogger<EnsureCanCreateEventFacade> logger)
     {
         this.communityRepository = communityRepository;
         this.communityMemberRepository = communityMemberRepository;
@@ -22,9 +22,9 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
     }
 
     public async Task HandleAsync(
-    Guid communityId,
-    Guid userId,
-    CancellationToken cancellationToken)
+        Guid communityId,
+        Guid userId,
+        CancellationToken cancellationToken)
     {
         var community = await communityRepository.GetByIdAsync(
             communityId,
@@ -32,6 +32,10 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
 
         if (community is null)
         {
+            logger.LogWarning(
+                "Cannot create event. Community {CommunityId} was not found.",
+                communityId);
+
             throw new CommunityNotFoundException(communityId);
         }
 
@@ -41,9 +45,24 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
                 userId,
                 cancellationToken);
 
-        if (communityMember is null ||
-            communityMember.MemberType != MemberType.ClubOfficer)
+        if (communityMember is null)
         {
+            logger.LogWarning(
+                "User {UserId} attempted to create an event in community {CommunityId}, but is not a member.",
+                userId,
+                communityId);
+
+            throw new UnauthorizedAccessException();
+        }
+
+        if (communityMember.MemberType != MemberType.ClubOfficer)
+        {
+            logger.LogWarning(
+                "User {UserId} attempted to create an event in community {CommunityId} with member type {MemberType}.",
+                userId,
+                communityId,
+                communityMember.MemberType);
+
             throw new UnauthorizedAccessException();
         }
     }
