@@ -1,7 +1,7 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Create Event
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { eventService } from "@/services/eventService";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import Button from "@/components/common/Button";
+import { useSearchParams } from "next/navigation";
 
 const createEventSchema = z
   .object({
@@ -66,8 +67,18 @@ const errorInputClass =
   "block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-red-400 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-red-500 sm:text-sm sm:leading-6 shadow-sm";
 
 export default function CreateEventPage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-gray-500">Loading...</div>}>
+      <CreateEventForm />
+    </Suspense>
+  );
+}
+
+function CreateEventForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const preselectedCommunityId = searchParams.get("communityId") ?? "";
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Fetch user's communities to populate the dropdown
@@ -84,6 +95,7 @@ export default function CreateEventPage() {
   } = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
+      communityId: preselectedCommunityId,
       visibility: "Public",
       category: "Other",
     },

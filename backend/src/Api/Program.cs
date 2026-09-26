@@ -143,6 +143,10 @@ builder.Services.AddScoped<
     IEnsureCanCreateEventFacade,
     EnsureCanCreateEventFacade>();
 
+builder.Services.AddScoped<
+    IGetAllPublicEventFacade,
+    GetAllPublicEventFacade>();
+
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();

@@ -8,5 +8,5 @@ namespace Modules.Events.Ports;
 
 public interface IEventRepository : IBaseRepository<EventEntity>
 {
-
+    Task<List<Event>> GetAllPublicEventAsync(CancellationToken cancellationToken);
 }

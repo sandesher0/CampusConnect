@@ -1,4 +1,4 @@
-public sealed class CommunityUserResponse
+public sealed record CommunityUserResponse
 {
     public required Guid UserId { get; init; }
     public required string Email { get; init; }

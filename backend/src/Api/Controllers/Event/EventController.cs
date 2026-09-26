@@ -4,7 +4,7 @@ using Application.Ports;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers;
+namespace Api.Controllers.Event;
 
 [ApiController]
 [Route("api/event")]
