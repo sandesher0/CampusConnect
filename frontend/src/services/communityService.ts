@@ -60,6 +60,12 @@ export const communityService = {
     await apiClient.post("/community/create", data);
   },
 
+  // GET /api/community/mine — returns communities the logged-in user belongs to
+  getMyCommunities: async (): Promise<Community[]> => {
+    const res = await apiClient.get("/community/mine");
+    return z.array(CommunitySchema).parse(res.data);
+  },
+
   // POST /api/community/{id}/join  (endpoint defined in CommunityController if present)
   joinCommunity: async (id: string): Promise<void> => {
     await apiClient.post(`/community/${id}/join`);

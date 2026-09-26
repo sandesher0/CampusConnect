@@ -34,5 +34,6 @@ export const queryKeys = {
     lists: () => [...queryKeys.communities.all, "list"],
     list: (filters: Record<string, any>) => [...queryKeys.communities.lists(), filters],
     detail: (id: string) => [...queryKeys.communities.all, "detail", id],
+    mine: () => [...queryKeys.communities.all, "mine"],
   },
 };
