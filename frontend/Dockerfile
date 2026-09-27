@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base AS dependencies
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ==========================================
 # STAGE 3: Build
