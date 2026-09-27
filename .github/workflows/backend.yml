@@ -27,12 +27,12 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/campus-connect-api:${{ github.sha }} .
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/campus-connect-api:${{ github.sha }}
+          docker build -t "${{ secrets.REGISTRY_LOGIN_SERVER }}/campus-connect-api:${{ github.sha }}" .
+          docker push "${{ secrets.REGISTRY_LOGIN_SERVER }}/campus-connect-api:${{ github.sha }}"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'campus-connect-backend' # Replace with your actual Azure App name
-            publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_API }}
+          app-name: 'campus-connect-backend' 
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_API }}
           images: '${{ secrets.REGISTRY_LOGIN_SERVER }}/campus-connect-api:${{ github.sha }}'
