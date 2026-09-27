@@ -157,7 +157,7 @@ builder.Services.AddScoped<
 
 builder.Services.AddScoped<
     ICommunityMembershipEligibilityFacade,
-    ICommunityMembershipEligibilityFacade>();
+    CommunityMembershipEligibilityFacade>();
 
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();

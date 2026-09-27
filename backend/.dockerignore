@@ -1,0 +1,7 @@
+# Keep local build output, IDE state, and development-only configuration out of the build context.
+bin/
+obj/
+.vs/
+**/bin/
+**/obj/
+src/Api/appsettings.Development.json

@@ -1,0 +1,8 @@
+# Avoid sending local dependencies, build outputs, and tooling state to Docker.
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+.env*
+npm-debug.log*
