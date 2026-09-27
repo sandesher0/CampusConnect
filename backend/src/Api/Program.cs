@@ -29,9 +29,13 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                  "http://localhost:3000",
+                  "https://campus-connect-frontend-dqftc4ddd8ejbwd5.indiasouthcentral-01.azurewebsites.net" 
+              )
+              .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowCredentials();
     });
 });
 
