@@ -1,19 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Emit a self-contained server bundle so the production Docker image excludes build tooling.
   output: "standalone",
   async rewrites() {
-    // Check if the env variable exists to determine the base URL
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL 
-      ? process.env.NEXT_PUBLIC_API_BASE_URL 
-      : "http://localhost:5252";
+    // 1. Get the raw variable
+    let rawUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5252";
+    
+    // 2. Strip out any accidental spaces or quotation marks
+    let cleanUrl = rawUrl.trim().replace(/['"]+/g, '');
+
+    // 3. Force https:// if it is somehow still missing
+    if (!cleanUrl.startsWith("http")) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
+    // 4. Remove any trailing slashes just in case (prevents double slashes in the destination)
+    cleanUrl = cleanUrl.replace(/\/+$/, '');
 
     return [
       {
         source: "/api/:path*",
-        // This ensures the /api/:path* is always appended to whatever the base URL is
-        destination: `${baseUrl}/api/:path*`, 
+        destination: `${cleanUrl}/api/:path*`, 
       },
     ];
   },
