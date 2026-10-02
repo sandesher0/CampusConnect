@@ -13,7 +13,7 @@ public class GetMyCommunityController : ControllerBase
 {
     [Authorize]
     [HttpGet("mine")]
-    public async Task<ActionResult<Community>> HandleAsync([FromServices] IGetMyCommunitiesFacade getMyCommunitiesFacade, [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<Community>>> HandleAsync([FromServices] IGetMyCommunitiesFacade getMyCommunitiesFacade, [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
         {
