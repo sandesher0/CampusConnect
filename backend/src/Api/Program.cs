@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                   "http://localhost:3000",
-                  "https://campus-connect-frontend-dqftc4ddd8ejbwd5.indiasouthcentral-01.azurewebsites.net" 
+                  "https://campus-connect-frontend-dqftc4ddd8ejbwd5.indiasouthcentral-01.azurewebsites.net"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -162,6 +162,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ICommunityMembershipEligibilityFacade,
     CommunityMembershipEligibilityFacade>();
+
+builder.Services.AddScoped<
+    ISearchCommunityFacade,
+    SearchCommunityFacade>();
 
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();

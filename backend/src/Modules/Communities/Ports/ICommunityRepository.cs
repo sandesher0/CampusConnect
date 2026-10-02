@@ -8,5 +8,5 @@ public interface ICommunityRepository : IBaseRepository<CommunityEntity>
 {
     Task<List<Community>> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken);
     Task<List<Community>> GetMyCommunitiesAsync(Guid userId, CancellationToken cancellationToken);
-
+    Task<List<Community>> SearchCommunityAsync(string searchKeyWord, CancellationToken cancellationToken);
 }
