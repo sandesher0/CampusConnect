@@ -1,6 +1,7 @@
 // Ref: workflow.md §6 State Management Strategy | Feature: Auth Store
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { authService } from "@/services/authService";
 import { User } from "@/services/userService";
 
 interface AuthState {
@@ -11,7 +12,7 @@ interface AuthState {
   setToken: (token: string | null) => void;
   setLoading: (isLoading: boolean) => void;
   login: (token: string, user: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -24,7 +25,10 @@ export const useAuthStore = create<AuthState>()(
       setToken: (token) => set({ token }),
       setLoading: (isLoading) => set({ isLoading }),
       login: (token, user) => set({ token, user, isLoading: false }),
-      logout: () => set({ user: null, token: null, isLoading: false }),
+      logout: async () => {
+        await authService.logout();
+        set({ user: null, token: null, isLoading: false });
+      },
     }),
     {
       name: "auth-storage",
