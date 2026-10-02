@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { communityService } from "@/services/communityService";
+import { queryKeys } from "@/services/queryKeys";
 import { useSearchParams } from "next/navigation";
 import Button from "@/components/common/Button";
 
@@ -19,22 +20,20 @@ export default function CommunityPage() {
 function CommunityPageInner() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const searchTerm = search.trim();
 
   const {
     data: communities = [],
     status,
     error,
   } = useQuery({
-    queryKey: ["communities"],
-    queryFn: () => communityService.getCommunities(),
+    queryKey: searchTerm
+      ? queryKeys.communities.search(searchTerm)
+      : queryKeys.communities.all,
+    queryFn: () => searchTerm
+      ? communityService.searchCommunities(searchTerm)
+      : communityService.getCommunities(),
   });
-
-  // Client-side filter since the API returns all public communities at once
-  const filtered = search
-    ? communities.filter((c) =>
-        c.communityName.toLowerCase().includes(search.toLowerCase())
-      )
-    : communities;
 
   if (status === "error") {
     return (
@@ -121,7 +120,7 @@ function CommunityPageInner() {
         )}
 
         {/* Empty state */}
-        {status === "success" && filtered.length === 0 && (
+        {status === "success" && communities.length === 0 && (
           <div className="text-center py-16 border border-dashed border-gray-200 rounded-lg">
             <p className="text-gray-500 text-sm">
               {search ? `No communities matching "${search}"` : "No public communities yet."}
@@ -130,9 +129,9 @@ function CommunityPageInner() {
         )}
 
         {/* Communities grid */}
-        {status === "success" && filtered.length > 0 && (
+        {status === "success" && communities.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((community) => (
+            {communities.map((community) => (
               <Link
                 key={community.id}
                 href={`/community/${community.id}`}
