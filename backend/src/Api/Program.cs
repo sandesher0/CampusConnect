@@ -191,6 +191,9 @@ builder.Services.AddScoped<
     IEventReservationRepository,
     EventReservationRepository>();
 
+builder.Services.AddScoped<
+    IGetEventReservationDetailsFacade,
+    GetEventReservationDetailsFacade>();
 
 
 
