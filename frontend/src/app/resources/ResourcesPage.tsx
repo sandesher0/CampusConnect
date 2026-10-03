@@ -8,6 +8,7 @@ import { resourceService } from "@/services/resourceService";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/common/Button";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function ResourcesPage() {
   return (
@@ -29,6 +30,7 @@ function ResourcesPageInner() {
     isFetchingNextPage,
     status,
     error,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["resources", { search, category }],
     queryFn: ({ pageParam = 1 }) =>
@@ -52,9 +54,9 @@ function ResourcesPageInner() {
           Failed to load resources
         </h2>
         <p className="text-gray-600 mb-6">
-          {error instanceof Error ? error.message : "An unknown error occurred"}
+          {getApiErrorMessage(error, "Failed to load resources.")}
         </p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
+        <Button variant="outline" onClick={() => void refetch()}>
           Try Again
         </Button>
       </div>

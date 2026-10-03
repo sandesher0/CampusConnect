@@ -10,6 +10,7 @@ import { authService } from "@/services/authService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Button from "@/components/common/Button";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,8 +39,8 @@ export default function LoginPage() {
       const { accessToken, user } = await authService.login(data.username, data.password);
       storeLogin(accessToken, user);
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Login failed. Please try again."));
     } finally {
       setIsSubmitting(false);
       setStoreLoading(false);

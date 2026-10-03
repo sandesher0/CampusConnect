@@ -8,6 +8,7 @@ import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import { useSearchParams } from "next/navigation";
 import Button from "@/components/common/Button";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function CommunityPage() {
   return (
@@ -26,6 +27,7 @@ function CommunityPageInner() {
     data: communities = [],
     status,
     error,
+    refetch,
   } = useQuery({
     queryKey: searchTerm
       ? queryKeys.communities.search(searchTerm)
@@ -39,9 +41,9 @@ function CommunityPageInner() {
     return (
       <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
         <p className="text-gray-600 mb-4">
-          {error instanceof Error ? error.message : "Failed to load communities"}
+          {getApiErrorMessage(error, "Failed to load communities.")}
         </p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
+        <Button variant="outline" onClick={() => void refetch()}>
           Try Again
         </Button>
       </div>

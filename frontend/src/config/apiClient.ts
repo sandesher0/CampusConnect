@@ -23,19 +23,12 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
+// Let the page that initiated a request render an actionable error. Redirecting
+// here turns ordinary backend errors (including authorization failures) into a
+// full page reload and hides the server's response.
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Handle common error cases
-    if (error.response?.status === 401) {
-      // Redirect to login or handle unauthorized access
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default apiClient;
