@@ -1,12 +1,12 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Events
 "use client";
 
-import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
@@ -16,16 +16,37 @@ export default function EventDetailPage() {
     data: event,
     status,
     isLoading,
+    error,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.events.detail(id),
     queryFn: () => eventService.getEventById(id),
     enabled: !!id,
   });
 
-  if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
-  if (status === "error") return notFound();
+  const joinMutation = useMutation({
+    mutationFn: () => eventService.joinEvent(id, event!.communityId),
+  });
 
-  if (!event) return notFound();
+  if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
+  if (status === "error" || !event) return (
+    <div className="py-8">
+      <div className="mx-auto max-w-4xl px-4 text-center">
+        <p className="text-red-600" role="alert">
+          {getApiErrorMessage(error, "Unable to load this event. Please try again.")}
+        </p>
+        <Link href="/events" className="mt-4 inline-block text-sm text-gray-900 underline">
+          Back to Events
+        </Link>
+        <button type="button" onClick={() => void refetch()} className="ml-4 text-sm text-gray-900 underline">
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+
+  const organizerName = `${event.organizer.firstName} ${event.organizer.lastName}`;
+  const organizerInitials = `${event.organizer.firstName.charAt(0)}${event.organizer.lastName.charAt(0)}`;
 
   return (
     <div className="py-8">
@@ -47,15 +68,60 @@ export default function EventDetailPage() {
           </div>
 
           <div className="border-t border-gray-100 pt-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">Attend this event</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  You must be a member of the organizing community to join.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => joinMutation.mutate()}
+                disabled={joinMutation.isPending || joinMutation.isSuccess}
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-gray-900 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {joinMutation.isPending
+                  ? "Joining..."
+                  : joinMutation.isSuccess
+                    ? "Joined"
+                    : "Join Event"}
+              </button>
+            </div>
+            {joinMutation.isSuccess && (
+              <p className="mt-3 text-sm text-green-700" role="status">
+                You have successfully joined this event.
+              </p>
+            )}
+            {joinMutation.isError && (
+              <p className="mt-3 text-sm text-red-600" role="alert">
+                {getApiErrorMessage(joinMutation.error, "Unable to join this event. Please try again.")}
+              </p>
+            )}
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Organized by</h2>
             <div className="flex items-center space-x-4">
               <div className="shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                {/* Organizer avatar would go here */}
-                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                {event.organizer.profileImageUrl ? (
+                  <img
+                    src={event.organizer.profileImageUrl}
+                    alt={organizerName}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-gray-600">{organizerInitials}</span>
+                )}
               </div>
               <div>
-                <h3 className="text-base font-medium text-gray-900">Organizer Name</h3>
-                <p className="text-sm text-gray-500">{event.createdBy}</p>
+                <h3 className="text-base font-medium text-gray-900">{organizerName}</h3>
+                <Link
+                  href={`/community/${event.organizerCommunity.communityId}`}
+                  className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+                >
+                  {event.organizerCommunity.communityName}
+                </Link>
               </div>
             </div>
           </div>

@@ -2,18 +2,34 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Base Layout
 import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function Header() {
   const { user, logout } = useAuthStore();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const isClient = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
 
+  const handleLogout = async () => {
+    setLogoutError(null);
+    try {
+      await logout();
+    } catch (error) {
+      setLogoutError(getApiErrorMessage(error, "Unable to log out. Please try again."));
+    }
+  };
+
   return (
     <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
+      {logoutError && (
+        <p className="bg-red-50 px-4 py-2 text-center text-sm text-red-700" role="alert">
+          {logoutError}
+        </p>
+      )}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-4 sm:gap-8">
           <Link href="/" className="shrink-0 text-xl font-semibold text-gray-900 tracking-tight">
@@ -46,7 +62,7 @@ export default function Header() {
               </Link>
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => void handleLogout()}
                 className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Log out

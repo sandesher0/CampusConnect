@@ -8,6 +8,7 @@ import Link from "next/link";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function CommunityDetailPage() {
   return (
@@ -24,7 +25,7 @@ function CommunityDetailInner() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const { data: community, status, error } = useQuery({
+  const { data: community, status, error, refetch } = useQuery({
     queryKey: queryKeys.communities.detail(id),
     queryFn: () => communityService.getCommunityById(id),
     enabled: !!id,
@@ -64,8 +65,11 @@ function CommunityDetailInner() {
           </Link>
           <div className="mt-8 text-center py-16 border border-dashed border-gray-200 rounded-lg">
             <p className="text-gray-500">
-              {error instanceof Error ? error.message : "Community not found."}
+              {getApiErrorMessage(error, "Community not found.")}
             </p>
+            <button type="button" onClick={() => void refetch()} className="mt-4 text-sm font-medium text-gray-900 underline">
+              Try again
+            </button>
           </div>
         </div>
       </div>
@@ -151,9 +155,7 @@ function CommunityDetailInner() {
                   </button>
                   {joinMutation.isError && (
                     <p className="max-w-48 text-right text-xs text-red-600" role="alert">
-                      {joinMutation.error instanceof Error
-                        ? joinMutation.error.message
-                        : "Unable to join this community. Please try again."}
+                      {getApiErrorMessage(joinMutation.error, "Unable to join this community. Please try again.")}
                     </p>
                   )}
                 </div>
