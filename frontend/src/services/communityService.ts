@@ -49,6 +49,12 @@ export const communityService = {
     return z.array(CommunitySchema).parse(res.data);
   },
 
+  // GET /api/community/search/{communityName} — returns matching public communities
+  searchCommunities: async (communityName: string): Promise<Community[]> => {
+    const res = await apiClient.get(`/community/search/${encodeURIComponent(communityName)}`);
+    return z.array(CommunitySchema).parse(res.data);
+  },
+
   // GET /api/community/{communityId} — returns CommunityDetailResponse
   getCommunityById: async (id: string): Promise<CommunityDetail> => {
     const res = await apiClient.get(`/community/${id}`);

@@ -13,7 +13,7 @@ WORKDIR /app
 FROM base AS dependencies
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # ==========================================
 # STAGE 3: Build
@@ -48,7 +48,6 @@ COPY --from=build --chown=nextjs:nodejs /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-USER nextjs
 EXPOSE 3000
 
 CMD ["node", "server.js"]

@@ -72,4 +72,8 @@ export const authService = {
 
     return { accessToken, user };
   },
+
+  logout: async (): Promise<void> => {
+    await apiClient.post("/auth/logout");
+  },
 };

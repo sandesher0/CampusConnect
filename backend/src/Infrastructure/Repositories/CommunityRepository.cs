@@ -25,10 +25,30 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
 
     public async Task<List<Community>> GetMyCommunitiesAsync(Guid userId, CancellationToken cancellationToken)
     {
+        var communityMember = context.Set<CommunityMemberEntity>();
         return await dbSet
                 .AsNoTracking()
-                .Where(c => c.CreatedBy == userId)
+                .Where(c => c.DeletedAt == null && (
+                    c.CreatedBy == userId ||
+                    communityMember.Any(m =>
+                    m.CommunityId == c.Id &&
+                    m.UserId == userId &&
+                    m.DeletedAt == null)
+                ))
                 .Select(x => CommunityEntityToDomain.ToDomain(x))
                 .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Community>> SearchCommunityAsync(string searchKeyWord, CancellationToken cancellationToken)
+    {
+        var foundCommunities = await dbSet.
+                                AsNoTracking().
+                                Where(
+                                    c => c.DeletedAt == null &&
+                                    c.CommunityType == CommunityType.Public &&
+                                    EF.Functions.ILike(c.CommunityName, $"%{searchKeyWord}%"))
+                                    .Select(x => CommunityEntityToDomain.ToDomain(x)).ToListAsync(cancellationToken);
+
+        return foundCommunities;
     }
 }
