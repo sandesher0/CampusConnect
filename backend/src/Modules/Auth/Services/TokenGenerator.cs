@@ -1,4 +1,5 @@
 namespace Modules.Auth.Services;
+
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
