@@ -21,7 +21,7 @@ public class GetEventFacade : IGetEventFacade
 
     public async Task<EventDetailResponse> HandleAsync(Guid eventId, CancellationToken cancellationToken)
     {
-        var entity = await repository.GetByIdAsync(eventId, cancellationToken);
+        var entity = await repository.GetByEventIdAsync(eventId, cancellationToken);
 
         if (entity is null)
         {
