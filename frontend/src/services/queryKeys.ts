@@ -18,6 +18,7 @@ export const queryKeys = {
     lists: () => [...queryKeys.events.all, "list"],
     list: (filters: Record<string, any>) => [...queryKeys.events.lists(), filters],
     detail: (id: string) => [...queryKeys.events.all, "detail", id],
+    reservations: (id: string) => [...queryKeys.events.all, "reservations", id],
   },
 
   // Resources

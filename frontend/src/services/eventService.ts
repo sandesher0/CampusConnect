@@ -42,6 +42,18 @@ export const EventDetailSchema = EventBaseSchema.extend({
 });
 export type EventDetail = z.infer<typeof EventDetailSchema>;
 
+// GET /api/event/reservation/{eventId} returns the event owner's attendee list.
+export const EventReservationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  reservedAt: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string().email(),
+  profileImageUrl: z.string().nullable(),
+});
+export type EventReservation = z.infer<typeof EventReservationSchema>;
+
 export type CreateEventPayload = {
   title: string;
   description: string;
@@ -65,6 +77,11 @@ export const eventService = {
   getEventById: async (id: string): Promise<EventDetail> => {
     const res = await apiClient.get(`/event/${id}`);
     return EventDetailSchema.parse(res.data);
+  },
+
+  getEventReservations: async (id: string): Promise<EventReservation[]> => {
+    const res = await apiClient.get(`/event/reservation/${id}`);
+    return z.array(EventReservationSchema).parse(res.data);
   },
 
   // POST /api/event/create
