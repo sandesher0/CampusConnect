@@ -3,7 +3,7 @@
 using Modules.Events.Ports;
 using Microsoft.Extensions.Logging;
 using Modules.Events.Domain;
-using Modules.Mapper.ToEntity;
+using Modules.Events.Mapper.ToEntity;
 
 namespace Modules.Events.Facades;
 

@@ -16,14 +16,19 @@ public class AppDbContext : DbContext
     public DbSet<CommunityEntity> Community => Set<CommunityEntity>();
     public DbSet<CommunityMemberEntity> CommunityMember => Set<CommunityMemberEntity>();
     public DbSet<EventEntity> Event => Set<EventEntity>();
+    public DbSet<EventReservationEntity> EventReservation => Set<EventReservationEntity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         builder.Entity<AccountEntity>()
-    .HasIndex(account => account.Username)
-    .IsUnique();
+            .HasIndex(account => account.Username)
+            .IsUnique();
+
+        builder.Entity<EventReservationEntity>()
+            .HasIndex(reservation => new { reservation.EventId, reservation.UserId })
+            .IsUnique();
 
     }
 }
