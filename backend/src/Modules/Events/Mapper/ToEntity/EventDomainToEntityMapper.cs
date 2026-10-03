@@ -15,7 +15,7 @@ public static class EventDomainToEntityMapper
             CommunityId = domain.CommunityId,
             CreatedBy = domain.CreatedBy,
             EventDate = domain.EventDate,
-            EventEndDate = domain.EventDate,
+            EventEndDate = domain.EventEndDate,
             Visibility = domain.Visibility,
             Category = domain.Category,
             CreateAt = DateTimeOffset.UtcNow

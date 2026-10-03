@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using SharedKernel.Exceptions;
 
 namespace API.ExceptionHandlers;
@@ -50,6 +48,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 title: "Account not found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+            return true;
         }
 
         if (exception is AccountNotFoundException)
@@ -60,6 +59,8 @@ public class GlobalExceptionHandler : IExceptionHandler
                 title: "Account not found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+
+            return true;
         }
 
         if (exception is UnauthorizedAccessException)
@@ -70,6 +71,18 @@ public class GlobalExceptionHandler : IExceptionHandler
                 title: "Account not found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+            return true;
+        }
+
+        if (exception is ForbiddenException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await Results.Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Account not found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+            return true;
         }
 
         if (exception is CommunityNotFoundException)
@@ -80,7 +93,22 @@ public class GlobalExceptionHandler : IExceptionHandler
                 title: "Community not found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+
+            return true;
         }
+
+        if (exception is EventNotFoundException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Community not found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+
+            return true;
+        }
+
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await Results.Problem(

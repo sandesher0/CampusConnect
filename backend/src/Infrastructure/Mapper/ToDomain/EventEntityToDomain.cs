@@ -15,7 +15,7 @@ public static class EventEntityToDomain
             EventDate = entity.EventDate,
             EventEndDate = entity.EventEndDate,
             CreatedBy = entity.CreatedBy,
-            CommunityId= entity.CommunityId,
+            CommunityId = entity.CommunityId,
             Visibility = entity.Visibility,
             Category = entity.Category
         };

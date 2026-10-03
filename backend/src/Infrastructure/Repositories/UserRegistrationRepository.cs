@@ -18,8 +18,8 @@ public class UserRegistrationRepository : BaseRepository<AppDbContext, UserEntit
         var userEntity = await dbSet.AsNoTracking().SingleOrDefaultAsync(u => u.Email == email);
         if (userEntity is null)
             return null;
-            
-        return new User 
+
+        return new User
         {
             Id = userEntity.Id,
             Email = userEntity.Email,

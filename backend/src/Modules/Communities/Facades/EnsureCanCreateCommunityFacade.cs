@@ -52,7 +52,7 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
                 userId,
                 communityId);
 
-            throw new UnauthorizedAccessException();
+            throw new ForbiddenException("You must be a member of this community to create events.");
         }
 
         if (communityMember.MemberType != MemberType.ClubOfficer)
@@ -63,7 +63,7 @@ public class EnsureCanCreateEventFacade : IEnsureCanCreateEventFacade
                 communityId,
                 communityMember.MemberType);
 
-            throw new UnauthorizedAccessException();
+            throw new ForbiddenException("Only club officers can create events for this community.");
         }
     }
 }

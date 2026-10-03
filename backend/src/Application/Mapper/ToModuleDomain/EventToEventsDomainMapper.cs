@@ -4,7 +4,7 @@ namespace Application.Mapper.ToModuleDomain;
 
 public static class EventToEventsDomainMapper
 {
-    public static Event ToDomain(Application.Domain.Event domain , Guid communityId ,Guid createdBy )
+    public static Event ToDomain(Application.Domain.Event domain, Guid communityId, Guid createdBy)
     {
         return new Event
         {
@@ -16,7 +16,7 @@ public static class EventToEventsDomainMapper
             Visibility = domain.Visibility,
             Category = domain.Category,
             CommunityId = communityId,
-            CreatedBy= createdBy
+            CreatedBy = createdBy
         };
     }
 }

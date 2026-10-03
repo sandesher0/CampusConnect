@@ -1,4 +1,5 @@
 namespace Modules.Auth.Options;
+
 public class JwtOptions
 {
     public const string SectionName = "Jwt";

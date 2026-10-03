@@ -167,6 +167,10 @@ builder.Services.AddScoped<
     ISearchCommunityFacade,
     SearchCommunityFacade>();
 
+builder.Services.AddScoped<
+    IGetEventFacade,
+    GetEventFacade>();
+
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 

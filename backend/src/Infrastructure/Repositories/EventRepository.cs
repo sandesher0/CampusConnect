@@ -15,9 +15,10 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
 
     public async Task<List<Event>> GetAllPublicEventAsync(CancellationToken cancellationToken)
     {
-        
+
         var result = await dbSet.AsNoTracking()
-                .Where(e => e.Visibility == EventVisibility.Public)
+                .Where(e => e.Visibility == EventVisibility.Public &&
+                       e.EventEndDate >= DateTimeOffset.UtcNow)
                 .Select(e => EventEntityToDomain.ToDomain(e))
                 .ToListAsync(cancellationToken);
         return result;
