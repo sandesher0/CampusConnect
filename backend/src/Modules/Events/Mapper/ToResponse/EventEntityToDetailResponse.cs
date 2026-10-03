@@ -19,7 +19,22 @@ public static class EventEntityToDetailResponse
             EventDate = eventEntity.EventDate,
             EventEndDate = eventEntity.EventEndDate,
             Visibility = eventEntity.Visibility,
-            Category = eventEntity.Category
+            Category = eventEntity.Category,
+            Organizer = new EventOrganizerUserResponse
+            {
+                Id = eventEntity.User.Id,
+                Email = eventEntity.User.Email,
+                FirstName = eventEntity.User.FirstName,
+                LastName = eventEntity.User.LastName,
+                PhoneNumber = eventEntity.User.PhoneNumber,
+                ProfileImageUrl = eventEntity.User.ProfileImageUrl
+            },
+            OrganizerCommunity = new EventOrganizerCommunityResponse
+            {
+                CommunityId = eventEntity.Community.Id,
+                CommunityName = eventEntity.Community.CommunityName,
+                CommunityType = eventEntity.Community.CommunityType
+            }
         };
     }
 }

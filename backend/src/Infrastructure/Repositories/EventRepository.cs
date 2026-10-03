@@ -23,4 +23,16 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
                 .ToListAsync(cancellationToken);
         return result;
     }
+
+    public async Task<EventEntity?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        var eventDetail = await dbSet.AsNoTracking()
+                    .Where(e => e.Id == eventId &&
+                    e.DeletedAt == null &&
+                    e.Visibility == EventVisibility.Public)
+                    .Include(e => e.User)
+                    .Include(e => e.Community)
+                    .SingleOrDefaultAsync(cancellationToken);
+        return eventDetail;
+    }
 }

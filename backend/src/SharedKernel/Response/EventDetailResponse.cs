@@ -2,7 +2,6 @@ using SharedKernel.Constants;
 
 namespace SharedKernel.Response;
 
-// Full representation used by the event detail page.
 public sealed record EventDetailResponse
 {
     public required Guid Id { get; init; }
@@ -15,4 +14,6 @@ public sealed record EventDetailResponse
     public required DateTimeOffset EventEndDate { get; init; }
     public required EventVisibility Visibility { get; init; }
     public required EventCategory Category { get; init; }
+    public required EventOrganizerUserResponse Organizer { get; init; }
+    public required EventOrganizerCommunityResponse OrganizerCommunity { get; init; }
 }
