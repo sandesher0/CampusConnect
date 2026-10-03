@@ -20,4 +20,14 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
                                em.DeletedAt == null).SingleOrDefaultAsync(cancellationToken);
         return eventMembership;
     }
+
+    public async Task<List<EventReservationEntity>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+       .AsNoTracking()
+       .Where(r => r.EventId == eventId && r.DeletedAt == null)
+       .Include(r => r.User)
+       .OrderBy(r => r.CreatedAt)
+       .ToListAsync(cancellationToken);
+    }
 }
