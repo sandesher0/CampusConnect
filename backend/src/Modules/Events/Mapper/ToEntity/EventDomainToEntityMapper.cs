@@ -1,6 +1,6 @@
 using Modules.Events.Domain;
 
-namespace Modules.Mapper.ToEntity;
+namespace Modules.Events.Mapper.ToEntity;
 
 public static class EventDomainToEntityMapper
 {

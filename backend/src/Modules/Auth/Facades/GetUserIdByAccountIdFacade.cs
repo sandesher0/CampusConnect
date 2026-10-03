@@ -16,6 +16,8 @@ public class GetUserIdByAccountIdFacade : IGetUserIdByAccountIdFacade
 
     public async Task<Guid?> HandleAsync(Guid accountId, CancellationToken cancellationToken)
     {
-        return await accountRepository.GetUserIdByAccountIdAsync(accountId, cancellationToken);
+        var userId = await accountRepository.GetUserIdByAccountIdAsync(accountId, cancellationToken);
+        logger.LogDebug("Resolved AccountId={AccountId} to UserId={UserId}", accountId, userId);
+        return userId;
     }
 }

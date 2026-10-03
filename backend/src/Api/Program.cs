@@ -171,6 +171,30 @@ builder.Services.AddScoped<
     IGetEventFacade,
     GetEventFacade>();
 
+builder.Services.AddScoped<
+    ICheckCommunityMembershipFacade,
+    CheckCommunityMembershipFacade>();
+
+builder.Services.AddScoped<
+    IJoinEventUseCase,
+    JoinEventUseCase>();
+
+builder.Services.AddScoped<
+    ICheckEventReservationStatusFacade,
+    CheckEventReservationStatusFacade>();
+
+builder.Services.AddScoped<
+    ICreateEventReservationFacade,
+    CreateEventReservationFacade>();
+
+builder.Services.AddScoped<
+    IEventReservationRepository,
+    EventReservationRepository>();
+
+
+
+
+
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 

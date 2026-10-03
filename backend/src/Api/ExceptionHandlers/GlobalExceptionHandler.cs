@@ -12,51 +12,61 @@ public class GlobalExceptionHandler : IExceptionHandler
         this.logger = logger;
     }
 
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
     {
-        logger.LogInformation("An Exception occurred: {Message}", exception.Message);
+        logger.LogInformation(
+            "An exception occurred: {Message}",
+            exception.Message);
 
         if (exception is AccountAlreadyExistsException)
         {
-            httpContext.Response.StatusCode =
-              StatusCodes.Status409Conflict;
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
 
             await Results.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Account Already Exists",
-                detail: exception.Message).ExecuteAsync(httpContext);
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+
             return true;
         }
 
         if (exception is UsernameAlreadyTakenException)
         {
-            httpContext.Response.StatusCode =
-              StatusCodes.Status409Conflict;
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
 
             await Results.Problem(
                 statusCode: StatusCodes.Status409Conflict,
-                title: "Username already Taken",
-                detail: exception.Message).ExecuteAsync(httpContext);
+                title: "Username Already Taken",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+
             return true;
         }
 
         if (exception is InvalidCredentialsException)
         {
-            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
             await Results.Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                title: "Account not found",
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Invalid Credentials",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+
             return true;
         }
 
         if (exception is AccountNotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+
             await Results.Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Account not found",
+                title: "Account Not Found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
 
@@ -66,31 +76,49 @@ public class GlobalExceptionHandler : IExceptionHandler
         if (exception is UnauthorizedAccessException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
             await Results.Problem(
                 statusCode: StatusCodes.Status401Unauthorized,
-                title: "Account not found",
+                title: "Unauthorized",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+
             return true;
         }
 
         if (exception is ForbiddenException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+
             await Results.Problem(
                 statusCode: StatusCodes.Status403Forbidden,
-                title: "Account not found",
+                title: "Forbidden",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
+
+            return true;
+        }
+
+        if (exception is ConflictException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status409Conflict;
+
+            await Results.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Conflict",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+
             return true;
         }
 
         if (exception is CommunityNotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+
             await Results.Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Community not found",
+                title: "Community Not Found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
 
@@ -100,22 +128,24 @@ public class GlobalExceptionHandler : IExceptionHandler
         if (exception is EventNotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+
             await Results.Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Community not found",
+                title: "Event Not Found",
                 detail: exception.Message
             ).ExecuteAsync(httpContext);
 
             return true;
         }
 
-
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,
             title: "Internal Server Error",
-            detail: "An Unexpected Error Occurred"
+            detail: "An unexpected error occurred."
         ).ExecuteAsync(httpContext);
+
         return true;
     }
 }
