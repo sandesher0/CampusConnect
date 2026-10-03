@@ -20,12 +20,12 @@ public class GetAllPublicEventFacade : IGetAllPublicEventFacade
         this.logger = logger;
     }
 
-    public async Task<List<EventResponse>> HandleAsync(CancellationToken cancellationToken)
+    public async Task<List<EventSummaryResponse>> HandleAsync(CancellationToken cancellationToken)
     {
         var events = await eventRepository.GetAllPublicEventAsync(cancellationToken);
 
         return events
-            .Select(EventDomainToResponse.ToResponse)
+            .Select(EventDomainToSummaryResponse.ToResponse)
             .ToList();
     }
 

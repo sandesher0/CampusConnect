@@ -4,5 +4,5 @@ namespace Modules.Events.Ports;
 
 public interface IGetEventFacade
 {
-    Task<EventResponse> HandleAsync(Guid eventId, CancellationToken cancellationToken);
+    Task<EventDetailResponse> HandleAsync(Guid eventId, CancellationToken cancellationToken);
 }

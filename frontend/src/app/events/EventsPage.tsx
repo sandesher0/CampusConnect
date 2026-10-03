@@ -138,7 +138,6 @@ export default function EventsPage() {
                           <span className="mx-2 text-gray-300">|</span>
                           <span>{event.location}</span>
                         </p>
-                        <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
                       </div>
 
                       {/* Arrow */}

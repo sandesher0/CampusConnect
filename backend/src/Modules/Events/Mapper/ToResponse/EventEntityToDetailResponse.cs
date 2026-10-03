@@ -4,11 +4,11 @@ using SharedKernel.Response;
 
 namespace Modules.Events.Mapper.ToResponse;
 
-public static class EventEntityToResponse
+public static class EventEntityToDetailResponse
 {
-    public static EventResponse ToResponse(EventEntity eventEntity)
+    public static EventDetailResponse ToResponse(EventEntity eventEntity)
     {
-        return new EventResponse
+        return new EventDetailResponse
         {
             Id = eventEntity.Id,
             Title = eventEntity.Title,

@@ -19,7 +19,7 @@ public class GetEventFacade : IGetEventFacade
         this.logger = logger;
     }
 
-    public async Task<EventResponse> HandleAsync(Guid eventId, CancellationToken cancellationToken)
+    public async Task<EventDetailResponse> HandleAsync(Guid eventId, CancellationToken cancellationToken)
     {
         var entity = await repository.GetByIdAsync(eventId, cancellationToken);
 
@@ -28,6 +28,6 @@ public class GetEventFacade : IGetEventFacade
             logger.LogWarning("Event {EventId} was not found.", eventId);
             throw new EventNotFoundException(eventId);
         }
-        return EventEntityToResponse.ToResponse(entity);
+        return EventEntityToDetailResponse.ToResponse(entity);
     }
 }

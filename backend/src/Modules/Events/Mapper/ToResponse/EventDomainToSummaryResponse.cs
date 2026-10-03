@@ -3,20 +3,17 @@ using SharedKernel.Response;
 
 namespace Modules.Events.Mapper.ToResponse;
 
-public static class EventDomainToResponse
+public static class EventDomainToSummaryResponse
 {
-    public static EventResponse ToResponse(Event domain)
+    public static EventSummaryResponse ToResponse(Event domain)
     {
-        return new EventResponse
+        return new EventSummaryResponse
         {
             Id = domain.Id,
             Title = domain.Title,
-            Description = domain.Description,
             Location = domain.Location,
-            CommunityId = domain.CommunityId,
-            CreatedBy = domain.CreatedBy,
             EventDate = domain.EventDate,
-            EventEndDate = domain.EventDate,
+            EventEndDate = domain.EventEndDate,
             Visibility = domain.Visibility,
             Category = domain.Category,
         };

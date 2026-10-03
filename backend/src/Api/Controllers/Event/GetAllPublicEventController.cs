@@ -13,7 +13,7 @@ public class GetAllPublicEventController : ControllerBase
 {
     [Authorize]
     [HttpGet("all")]
-    public async Task<ActionResult<List<EventResponse>>> HandleAsync(IGetAllPublicEventFacade getAllPublicEventFacade, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<EventSummaryResponse>>> HandleAsync(IGetAllPublicEventFacade getAllPublicEventFacade, CancellationToken cancellationToken)
     {
         var response = await getAllPublicEventFacade.HandleAsync(cancellationToken);
         return Ok(response);

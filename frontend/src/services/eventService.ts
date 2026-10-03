@@ -2,23 +2,30 @@
 import apiClient from "@/config/apiClient";
 import { z } from "zod";
 
-// EventResponse schema — matches GET /api/event/all response
+// Fields shared by the event list and detail responses.
 // Enums are serialized as strings via JsonStringEnumConverter
 // Dates are DateTimeOffset (ISO 8601 with offset)
-export const EventSchema = z.object({
+const EventBaseSchema = z.object({
   id: z.string(),
   title: z.string(),
-  description: z.string(),
   location: z.string(),
-  communityId: z.string(),
-  createdBy: z.string(),
   eventDate: z.string(),
   eventEndDate: z.string(),
   visibility: z.union([z.string(), z.number()]).transform((v) => String(v)),
   category: z.union([z.string(), z.number()]).transform((v) => String(v)),
 });
 
-export type Event = z.infer<typeof EventSchema>;
+// GET /api/event/all returns only the fields needed to render event cards.
+export const EventSummarySchema = EventBaseSchema;
+export type EventSummary = z.infer<typeof EventSummarySchema>;
+
+// GET /api/event/{eventId} returns the fields needed by the detail page.
+export const EventDetailSchema = EventBaseSchema.extend({
+  description: z.string(),
+  communityId: z.string(),
+  createdBy: z.string(),
+});
+export type EventDetail = z.infer<typeof EventDetailSchema>;
 
 export type CreateEventPayload = {
   title: string;
@@ -33,15 +40,16 @@ export type CreateEventPayload = {
 
 // Service functions
 export const eventService = {
-  // GET /api/event/all — returns List<EventResponse> (public events only)
-  getEvents: async (): Promise<Event[]> => {
+  // GET /api/event/all — returns List<EventSummaryResponse> (public events only)
+  getEvents: async (): Promise<EventSummary[]> => {
     const res = await apiClient.get("/event/all");
-    return z.array(EventSchema).parse(res.data);
+    return z.array(EventSummarySchema).parse(res.data);
   },
 
-  getEventById: async (id: string): Promise<Event> => {
+  // GET /api/event/{eventId} — returns one EventDetailResponse
+  getEventById: async (id: string): Promise<EventDetail> => {
     const res = await apiClient.get(`/event/${id}`);
-    return EventSchema.parse(res.data);
+    return EventDetailSchema.parse(res.data);
   },
 
   // POST /api/event/create
@@ -49,7 +57,7 @@ export const eventService = {
     await apiClient.post("/event/create", data);
   },
 
-  updateEvent: async (id: string, data: Partial<Event>): Promise<void> => {
+  updateEvent: async (id: string, data: Partial<EventDetail>): Promise<void> => {
     await apiClient.patch(`/event/${id}`, data);
   },
 

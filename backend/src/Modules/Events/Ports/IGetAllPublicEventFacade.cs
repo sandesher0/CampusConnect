@@ -5,5 +5,5 @@ namespace Modules.Events.Ports;
 
 public interface IGetAllPublicEventFacade
 {
-    Task<List<EventResponse>> HandleAsync(CancellationToken cancellationToken);
+    Task<List<EventSummaryResponse>> HandleAsync(CancellationToken cancellationToken);
 }
