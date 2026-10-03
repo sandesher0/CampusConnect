@@ -15,15 +15,30 @@ const EventBaseSchema = z.object({
   category: z.union([z.string(), z.number()]).transform((v) => String(v)),
 });
 
-// GET /api/event/all returns only the fields needed to render event cards.
+// GET /api/event/all returns the lightweight event-card representation.
 export const EventSummarySchema = EventBaseSchema;
 export type EventSummary = z.infer<typeof EventSummarySchema>;
 
-// GET /api/event/{eventId} returns the fields needed by the detail page.
+const EventOrganizerSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  profileImageUrl: z.string().nullable(),
+});
+
+const EventOrganizerCommunitySchema = z.object({
+  communityId: z.string(),
+  communityName: z.string(),
+  communityType: z.union([z.string(), z.number()]).transform((v) => String(v)),
+});
+
+// GET /api/event/{eventId} returns the full event-detail representation.
 export const EventDetailSchema = EventBaseSchema.extend({
   description: z.string(),
   communityId: z.string(),
   createdBy: z.string(),
+  organizer: EventOrganizerSchema,
+  organizerCommunity: EventOrganizerCommunitySchema,
 });
 export type EventDetail = z.infer<typeof EventDetailSchema>;
 

@@ -27,6 +27,9 @@ export default function EventDetailPage() {
 
   if (!event) return notFound();
 
+  const organizerName = `${event.organizer.firstName} ${event.organizer.lastName}`;
+  const organizerInitials = `${event.organizer.firstName.charAt(0)}${event.organizer.lastName.charAt(0)}`;
+
   return (
     <div className="py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,12 +53,24 @@ export default function EventDetailPage() {
             <h2 className="text-lg font-medium text-gray-900 mb-4">Organized by</h2>
             <div className="flex items-center space-x-4">
               <div className="shrink-0 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                {/* Organizer avatar would go here */}
-                <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                {event.organizer.profileImageUrl ? (
+                  <img
+                    src={event.organizer.profileImageUrl}
+                    alt={organizerName}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium text-gray-600">{organizerInitials}</span>
+                )}
               </div>
               <div>
-                <h3 className="text-base font-medium text-gray-900">Organizer Name</h3>
-                <p className="text-sm text-gray-500">{event.createdBy}</p>
+                <h3 className="text-base font-medium text-gray-900">{organizerName}</h3>
+                <Link
+                  href={`/community/${event.organizerCommunity.communityId}`}
+                  className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+                >
+                  {event.organizerCommunity.communityName}
+                </Link>
               </div>
             </div>
           </div>
