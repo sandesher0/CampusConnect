@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { communityService } from "@/services/communityService";
 import Button from "@/components/common/Button";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 const createCommunitySchema = z.object({
   communityName: z
@@ -55,10 +56,8 @@ export default function CreateCommunityPage() {
       queryClient.invalidateQueries({ queryKey: ["communities"] });
       router.push("/community");
     },
-    onError: (err: any) => {
-      setServerError(
-        err?.response?.data?.message || err?.message || "Failed to create community. Please try again."
-      );
+    onError: (err) => {
+      setServerError(getApiErrorMessage(err, "Failed to create community. Please try again."));
     },
   });
 

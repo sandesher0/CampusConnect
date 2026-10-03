@@ -13,6 +13,7 @@ import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import Button from "@/components/common/Button";
 import { useSearchParams } from "next/navigation";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 const createEventSchema = z
   .object({
@@ -119,12 +120,8 @@ function CreateEventForm() {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       router.push("/events");
     },
-    onError: (err: any) => {
-      setServerError(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to create event. Please try again."
-      );
+    onError: (err) => {
+      setServerError(getApiErrorMessage(err, "Failed to create event. Please try again."));
     },
   });
 

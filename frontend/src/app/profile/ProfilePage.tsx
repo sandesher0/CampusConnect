@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/stores/authStore";
 import { userService } from "@/services/userService";
 import Button from "@/components/common/Button";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -14,11 +15,18 @@ export default function ProfilePage() {
   const [editedFirstName, setEditedFirstName] = useState(user?.user.firstName ?? "");
   const [editedLastName, setEditedLastName] = useState(user?.user.lastName ?? "");
   const [editedEmail, setEditedEmail] = useState(user?.user.email ?? "");
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     setIsLoading(true);
-    await logout();
-    setIsLoading(false);
+    setServerError(null);
+    try {
+      await logout();
+    } catch (error) {
+      setServerError(getApiErrorMessage(error, "Unable to log out. Please try again."));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -72,6 +80,11 @@ export default function ProfilePage() {
 
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
+            {serverError && (
+              <p className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700" role="alert">
+                {serverError}
+              </p>
+            )}
             <div className="flex items-center space-x-6">
               <div className="shrink-0">
                 <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">

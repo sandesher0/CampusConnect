@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Academic: "bg-blue-50 text-blue-700",
@@ -17,7 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function EventsPage() {
-  const { data: events = [], status } = useQuery({
+  const { data: events = [], status, error, refetch } = useQuery({
     queryKey: queryKeys.events.lists(),
     queryFn: () => eventService.getEvents(),
   });
@@ -49,8 +50,8 @@ export default function EventsPage() {
 
   if (status === "error") return (
     <div className="py-8 text-center">
-      <p className="text-gray-500">Failed to load events.</p>
-      <button onClick={() => window.location.reload()} className="mt-3 text-sm text-gray-900 underline">
+      <p className="text-red-600" role="alert">{getApiErrorMessage(error, "Failed to load events.")}</p>
+      <button onClick={() => void refetch()} className="mt-3 text-sm text-gray-900 underline">
         Try again
       </button>
     </div>

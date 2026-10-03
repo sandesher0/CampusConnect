@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/services/authService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,8 +47,8 @@ export default function RegisterPage() {
       );
       storeLogin(accessToken, user);
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Registration failed");
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Registration failed. Please try again."));
     } finally {
       setIsSubmitting(false);
       setStoreLoading(false);

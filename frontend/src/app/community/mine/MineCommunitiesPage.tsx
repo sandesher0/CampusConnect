@@ -6,6 +6,7 @@ import Link from "next/link";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function MineCommunitiesPage() {
   const { user } = useAuthStore();
@@ -14,6 +15,7 @@ export default function MineCommunitiesPage() {
     data: communities = [],
     status,
     error,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.communities.mine(),
     queryFn: () => communityService.getMyCommunities(),
@@ -66,10 +68,10 @@ export default function MineCommunitiesPage() {
         {status === "error" && (
           <div className="text-center py-16 border border-dashed border-gray-200 rounded-lg">
             <p className="text-gray-500 text-sm">
-              {error instanceof Error ? error.message : "Failed to load your communities"}
+              {getApiErrorMessage(error, "Failed to load your communities.")}
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => void refetch()}
               className="mt-4 text-sm font-medium text-gray-900 underline"
             >
               Try again

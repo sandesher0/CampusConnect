@@ -1,13 +1,12 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Events
 "use client";
 
-import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import axios from "axios";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
@@ -17,6 +16,8 @@ export default function EventDetailPage() {
     data: event,
     status,
     isLoading,
+    error,
+    refetch,
   } = useQuery({
     queryKey: queryKeys.events.detail(id),
     queryFn: () => eventService.getEventById(id),
@@ -28,9 +29,21 @@ export default function EventDetailPage() {
   });
 
   if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
-  if (status === "error") return notFound();
-
-  if (!event) return notFound();
+  if (status === "error" || !event) return (
+    <div className="py-8">
+      <div className="mx-auto max-w-4xl px-4 text-center">
+        <p className="text-red-600" role="alert">
+          {getApiErrorMessage(error, "Unable to load this event. Please try again.")}
+        </p>
+        <Link href="/events" className="mt-4 inline-block text-sm text-gray-900 underline">
+          Back to Events
+        </Link>
+        <button type="button" onClick={() => void refetch()} className="ml-4 text-sm text-gray-900 underline">
+          Try again
+        </button>
+      </div>
+    </div>
+  );
 
   const organizerName = `${event.organizer.firstName} ${event.organizer.lastName}`;
   const organizerInitials = `${event.organizer.firstName.charAt(0)}${event.organizer.lastName.charAt(0)}`;
@@ -82,9 +95,7 @@ export default function EventDetailPage() {
             )}
             {joinMutation.isError && (
               <p className="mt-3 text-sm text-red-600" role="alert">
-                {axios.isAxiosError(joinMutation.error)
-                  ? joinMutation.error.response?.data?.detail ?? "Unable to join this event. Please try again."
-                  : "Unable to join this event. Please try again."}
+                {getApiErrorMessage(joinMutation.error, "Unable to join this event. Please try again.")}
               </p>
             )}
           </div>
