@@ -72,6 +72,13 @@ export const eventService = {
     await apiClient.post("/event/create", data);
   },
 
+  // POST /api/event/join?communityId={communityId}&eventId={eventId}
+  joinEvent: async (eventId: string, communityId: string): Promise<void> => {
+    await apiClient.post("/event/join", undefined, {
+      params: { eventId, communityId },
+    });
+  },
+
   updateEvent: async (id: string, data: Partial<EventDetail>): Promise<void> => {
     await apiClient.patch(`/event/${id}`, data);
   },

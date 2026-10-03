@@ -3,8 +3,9 @@
 
 import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import axios from "axios";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
 
@@ -20,6 +21,10 @@ export default function EventDetailPage() {
     queryKey: queryKeys.events.detail(id),
     queryFn: () => eventService.getEventById(id),
     enabled: !!id,
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: () => eventService.joinEvent(id, event!.communityId),
   });
 
   if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
@@ -47,6 +52,41 @@ export default function EventDetailPage() {
               {new Date(event.eventDate).toLocaleDateString()} • {event.location}
             </div>
             <p className="text-gray-700 leading-relaxed">{event.description}</p>
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">Attend this event</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  You must be a member of the organizing community to join.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => joinMutation.mutate()}
+                disabled={joinMutation.isPending || joinMutation.isSuccess}
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-gray-900 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {joinMutation.isPending
+                  ? "Joining..."
+                  : joinMutation.isSuccess
+                    ? "Joined"
+                    : "Join Event"}
+              </button>
+            </div>
+            {joinMutation.isSuccess && (
+              <p className="mt-3 text-sm text-green-700" role="status">
+                You have successfully joined this event.
+              </p>
+            )}
+            {joinMutation.isError && (
+              <p className="mt-3 text-sm text-red-600" role="alert">
+                {axios.isAxiosError(joinMutation.error)
+                  ? joinMutation.error.response?.data?.detail ?? "Unable to join this event. Please try again."
+                  : "Unable to join this event. Please try again."}
+              </p>
+            )}
           </div>
 
           <div className="border-t border-gray-100 pt-6">
