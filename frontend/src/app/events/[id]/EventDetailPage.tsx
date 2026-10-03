@@ -1,16 +1,27 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Events
 "use client";
 
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { getApiErrorMessage } from "@/lib/apiError";
 import Link from "next/link";
+import { Suspense } from "react";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
-import { getApiErrorMessage } from "@/lib/apiError";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function EventDetailPage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center">Loading event...</div>}>
+      <EventDetailInner />
+    </Suspense>
+  );
+}
+
+function EventDetailInner() {
   const params = useParams<{ id: string }>();
   const { id } = params;
+  const { user } = useAuthStore();
 
   const {
     data: event,
@@ -24,8 +35,19 @@ export default function EventDetailPage() {
     enabled: !!id,
   });
 
+  const isOwner = event?.createdBy === user?.user?.id;
+  const {
+    data: reservations = [],
+    status: reservationsStatus,
+  } = useQuery({
+    queryKey: queryKeys.events.reservations(id),
+    queryFn: () => eventService.getEventReservations(id),
+    enabled: Boolean(id && event && isOwner),
+  });
+
   const joinMutation = useMutation({
-    mutationFn: () => eventService.joinEvent(id, event!.communityId),
+    mutationFn: () =>
+      eventService.joinEvent(id, event?.communityId ?? ""),
   });
 
   if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
@@ -141,6 +163,61 @@ export default function EventDetailPage() {
               </dl>
             </div>
           ) : null}
+
+          {isOwner && (
+            <div className="border-t border-gray-100 pt-6">
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">Reservations</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {reservations.length} {reservations.length === 1 ? "attendee" : "attendees"}
+                  </p>
+                </div>
+              </div>
+
+              {reservationsStatus === "pending" ? (
+                <p className="py-4 text-center text-sm text-gray-500">Loading reservations...</p>
+              ) : reservationsStatus === "error" ? (
+                <p className="py-4 text-center text-sm text-red-600" role="alert">
+                  Unable to load reservations. Please try again.
+                </p>
+              ) : reservations.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-gray-200 py-4 text-center text-sm text-gray-500">
+                  No reservations yet.
+                </p>
+              ) : (
+                <ul className="divide-y divide-gray-100 rounded-lg border border-gray-100 px-4">
+                  {reservations.map((reservation) => (
+                    <li key={reservation.id} className="flex items-center gap-3 py-3">
+                      {reservation.profileImageUrl ? (
+                        <img
+                          src={reservation.profileImageUrl}
+                          alt={`${reservation.firstName} ${reservation.lastName}`}
+                          className="h-9 w-9 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                          {reservation.firstName.charAt(0)}{reservation.lastName.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">
+                          {reservation.firstName} {reservation.lastName}
+                        </p>
+                        <p className="truncate text-xs text-gray-500">{reservation.email}</p>
+                      </div>
+                      <time
+                        dateTime={reservation.reservedAt}
+                        className="shrink-0 text-right text-xs text-gray-400"
+                      >
+                        {new Date(reservation.reservedAt).toLocaleDateString()}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
