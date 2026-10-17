@@ -54,6 +54,22 @@ export const EventReservationSchema = z.object({
 });
 export type EventReservation = z.infer<typeof EventReservationSchema>;
 
+// GET /api/event/reservations/mine returns the current user's reservations.
+export const MyEventReservationSchema = z.object({
+  reservationId: z.string(),
+  eventId: z.string(),
+  reservedAt: z.string(),
+  title: z.string(),
+  description: z.string(),
+  location: z.string(),
+  eventDate: z.string(),
+  eventEndDate: z.string(),
+  visibility: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  category: z.union([z.string(), z.number()]).transform((v) => String(v)),
+  communityId: z.string(),
+});
+export type MyEventReservation = z.infer<typeof MyEventReservationSchema>;
+
 export type CreateEventPayload = {
   title: string;
   description: string;
@@ -82,6 +98,17 @@ export const eventService = {
   getEventReservations: async (id: string): Promise<EventReservation[]> => {
     const res = await apiClient.get(`/event/reservation/${id}`);
     return z.array(EventReservationSchema).parse(res.data);
+  },
+
+  // GET /api/event/reservations/mine — returns List<MyEventReservationResponse>
+  getMyReservations: async (): Promise<MyEventReservation[]> => {
+    const res = await apiClient.get("/event/reservations/mine");
+    return z.array(MyEventReservationSchema).parse(res.data);
+  },
+
+  // DELETE /api/event/reservation/{eventId} — cancel a reservation
+  cancelReservation: async (eventId: string): Promise<void> => {
+    await apiClient.delete(`/event/reservation/${eventId}`);
   },
 
   // POST /api/event/create

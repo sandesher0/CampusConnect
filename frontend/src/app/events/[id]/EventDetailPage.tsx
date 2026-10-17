@@ -2,10 +2,10 @@
 "use client";
 
 import { notFound, useParams } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/lib/apiError";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
@@ -22,6 +22,8 @@ function EventDetailInner() {
   const params = useParams<{ id: string }>();
   const { id } = params;
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
 
   const {
     data: event,
@@ -45,9 +47,32 @@ function EventDetailInner() {
     enabled: Boolean(id && event && isOwner),
   });
 
+  const { data: myReservations = [] } = useQuery({
+    queryKey: queryKeys.events.myReservations(),
+    queryFn: () => eventService.getMyReservations(),
+    enabled: Boolean(user),
+  });
+
+  const isReservedByMe = myReservations.some((r) => r.eventId === id);
+
   const joinMutation = useMutation({
     mutationFn: () =>
       eventService.joinEvent(id, event?.communityId ?? ""),
+    onSuccess: () => {
+      setCancelFeedback(null);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.myReservations() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.reservations(id) });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => eventService.cancelReservation(id),
+    onSuccess: () => {
+      setCancelFeedback("Your reservation has been cancelled.");
+      joinMutation.reset();
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.myReservations() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.events.reservations(id) });
+    },
   });
 
   if (status === "pending" || isLoading) return <div className="text-center py-12">Loading event...</div>;
@@ -94,23 +119,53 @@ function EventDetailInner() {
               <div>
                 <h2 className="text-lg font-medium text-gray-900">Attend this event</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  You must be a member of the organizing community to join.
+                  {isReservedByMe || joinMutation.isSuccess
+                    ? "You have a reserved spot for this event."
+                    : "You must be a member of the organizing community to join."}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => joinMutation.mutate()}
-                disabled={joinMutation.isPending || joinMutation.isSuccess}
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-gray-900 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {joinMutation.isPending
-                  ? "Joining..."
-                  : joinMutation.isSuccess
-                    ? "Joined"
-                    : "Join Event"}
-              </button>
+
+              {isReservedByMe || joinMutation.isSuccess ? (
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700">
+                    Reserved
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to cancel your reservation?")) {
+                        cancelMutation.mutate();
+                      }
+                    }}
+                    disabled={cancelMutation.isPending}
+                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700 shadow-sm transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {cancelMutation.isPending ? "Cancelling..." : "Cancel Reservation"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => joinMutation.mutate()}
+                  disabled={joinMutation.isPending}
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-gray-900 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {joinMutation.isPending ? "Joining..." : "Join Event"}
+                </button>
+              )}
             </div>
-            {joinMutation.isSuccess && (
+
+            {cancelFeedback && (
+              <p className="mt-3 text-sm text-gray-600" role="status">
+                {cancelFeedback}
+              </p>
+            )}
+            {cancelMutation.isError && (
+              <p className="mt-3 text-sm text-red-600" role="alert">
+                {getApiErrorMessage(cancelMutation.error, "Unable to cancel your reservation. Please try again.")}
+              </p>
+            )}
+            {joinMutation.isSuccess && !isReservedByMe && (
               <p className="mt-3 text-sm text-green-700" role="status">
                 You have successfully joined this event.
               </p>

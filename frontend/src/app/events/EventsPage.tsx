@@ -62,19 +62,27 @@ export default function EventsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Campus Events</h1>
             <p className="mt-1 text-sm text-gray-500">
               {events.length > 0 ? `${events.length} public event${events.length === 1 ? "" : "s"}` : ""}
             </p>
           </div>
-          <Link
-            href="/events/create"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors"
-          >
-            + Create Event
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/events/reservations/mine"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 text-gray-900 transition-colors whitespace-nowrap"
+            >
+              My Reservations
+            </Link>
+            <Link
+              href="/events/create"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
+            >
+              + Create Event
+            </Link>
+          </div>
         </div>
 
         {/* Events list */}
