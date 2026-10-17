@@ -125,6 +125,19 @@ public class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        if (exception is ReservationNotFoundException)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+
+            await Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Reservation Not Found",
+                detail: exception.Message
+            ).ExecuteAsync(httpContext);
+
+            return true;
+        }
+
         if (exception is EventNotFoundException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;

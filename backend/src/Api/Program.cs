@@ -199,6 +199,9 @@ builder.Services.AddScoped<
     IGetMyEventReservationsFacade,
     GetMyEventReservationsFacade>();
 
+builder.Services.AddScoped<
+    ICancelEventReservationFacade,
+    CancelEventReservationFacade>();
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 
