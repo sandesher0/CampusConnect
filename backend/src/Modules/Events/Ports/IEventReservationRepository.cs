@@ -7,4 +7,5 @@ public interface IEventReservationRepository : IBaseRepository<EventReservationE
 {
     Task<EventReservationEntity?> CheckEventReservation(Guid eventId, Guid UserId, CancellationToken cancellationToken);
     Task<List<EventReservationEntity>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken);
+    Task<List<EventReservationEntity>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken);
 }
