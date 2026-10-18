@@ -21,6 +21,15 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
         return eventMembership;
     }
 
+    public async Task<EventReservationEntity?> GetActiveReservationAsync(Guid eventId, Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .Where(em => em.EventId == eventId &&
+                         em.UserId == userId &&
+                         em.DeletedAt == null)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<List<EventReservationEntity>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
     {
         return await dbSet
@@ -29,5 +38,15 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
        .Include(r => r.User)
        .OrderBy(r => r.CreatedAt)
        .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<EventReservationEntity>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && r.DeletedAt == null)
+            .Include(r => r.Event)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
 }
