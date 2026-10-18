@@ -1,5 +1,6 @@
 using Api.Requests;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
 using Modules.Communities.Domain;
@@ -25,6 +26,9 @@ public class CreateCommunityController : ControllerBase
 
     [Authorize]
     [HttpPost("create")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> HandleAsync(CreateCommunityRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))

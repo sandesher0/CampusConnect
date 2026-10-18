@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
@@ -12,6 +13,8 @@ public class SearchCommunityController : ControllerBase
 {
     [HttpGet("search/{communityName}")]
     [Authorize]
+    [ProducesResponseType(typeof(PagedResult<Community>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PagedResult<Community>>> HandleAsync(
         [FromServices] ISearchCommunityFacade searchCommunityFacade,
         string communityName,

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
@@ -20,6 +21,8 @@ public class GetAllPublicCommunitiesController : ControllerBase
 
     [Authorize]
     [HttpGet("all")]
+    [ProducesResponseType(typeof(PagedResult<Community>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PagedResult<Community>>> HandleAsync(
         [FromQuery] PageRequest page,
         CancellationToken cancellationToken)

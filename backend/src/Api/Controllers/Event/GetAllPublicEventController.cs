@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Events.Ports;
 using SharedKernel.Constants;
@@ -12,6 +13,8 @@ public class GetAllPublicEventController : ControllerBase
 {
     [Authorize]
     [HttpGet("all")]
+    [ProducesResponseType(typeof(PagedResult<EventSummaryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PagedResult<EventSummaryResponse>>> HandleAsync(
         [FromServices] IGetAllPublicEventFacade getAllPublicEventFacade,
         [FromQuery] PageRequest page,

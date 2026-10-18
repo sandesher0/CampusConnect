@@ -1,8 +1,9 @@
-using Api.Requests;
-using Microsoft.AspNetCore.Mvc;
-using Modules.Auth.Ports;
-using Modules.Auth.Domain;
 using System.Security.Claims;
+using Api.Requests;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Modules.Auth.Domain;
+using Modules.Auth.Ports;
 
 namespace Api.Controllers.Auth;
 
@@ -18,6 +19,8 @@ public class ChangePasswordController : ControllerBase
     }
 
     [HttpPatch("change-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleAsync(ChangePasswordRequest request, CancellationToken cancellationToken)
     {
         var accountId = User.FindFirst("sub")?.Value;

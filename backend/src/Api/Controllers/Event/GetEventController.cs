@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Events.Ports;
 using SharedKernel.Response;
@@ -12,6 +13,9 @@ public class GetEventController : ControllerBase
 {
     [HttpGet("{eventId:guid}")]
     [Authorize]
+    [ProducesResponseType(typeof(EventDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EventDetailResponse>> HandleAsync([FromServices] IGetEventFacade getEventFacade, Guid eventId, CancellationToken cancellationToken)
     {
         var eventResponse = await getEventFacade.HandleAsync(eventId, cancellationToken);
