@@ -1,8 +1,9 @@
 using Modules.Communities.Domain;
+using SharedKernel.Constants;
 
 namespace Modules.Communities.Ports;
 
 public interface IGetAllPublicCommunitiesFacade
 {
-    Task<List<Community>?> HandleAsync(CancellationToken cancellationToken);
+    Task<PagedResult<Community>> HandleAsync(PageRequest page, CancellationToken cancellationToken);
 }

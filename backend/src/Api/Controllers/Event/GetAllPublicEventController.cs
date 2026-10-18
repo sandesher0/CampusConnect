@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Modules.Events.Domain;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Response;
-
 
 namespace Api.Controllers.Event;
 
@@ -13,9 +12,12 @@ public class GetAllPublicEventController : ControllerBase
 {
     [Authorize]
     [HttpGet("all")]
-    public async Task<ActionResult<List<EventSummaryResponse>>> HandleAsync(IGetAllPublicEventFacade getAllPublicEventFacade, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<EventSummaryResponse>>> HandleAsync(
+        [FromServices] IGetAllPublicEventFacade getAllPublicEventFacade,
+        [FromQuery] PageRequest page,
+        CancellationToken cancellationToken)
     {
-        var response = await getAllPublicEventFacade.HandleAsync(cancellationToken);
+        var response = await getAllPublicEventFacade.HandleAsync(page, cancellationToken);
         return Ok(response);
     }
 }

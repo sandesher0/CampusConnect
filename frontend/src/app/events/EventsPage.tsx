@@ -2,10 +2,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
 import { getApiErrorMessage } from "@/lib/apiError";
+import Pagination from "@/components/common/Pagination";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Academic: "bg-blue-50 text-blue-700",
@@ -18,10 +20,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function EventsPage() {
-  const { data: events = [], status, error, refetch } = useQuery({
-    queryKey: queryKeys.events.lists(),
-    queryFn: () => eventService.getEvents(),
+  const [page, setPage] = useState(1);
+
+  const { data, status, isFetching, error, refetch } = useQuery({
+    queryKey: [...queryKeys.events.lists(), page],
+    queryFn: () => eventService.getEvents({ page, pageSize: 10 }),
   });
+
+  const events = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   if (status === "pending") return (
     <div className="py-8">
@@ -159,6 +166,15 @@ export default function EventsPage() {
               );
             })}
           </div>
+        )}
+
+        {status === "success" && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
         )}
       </div>
     </div>

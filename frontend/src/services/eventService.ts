@@ -81,12 +81,14 @@ export type CreateEventPayload = {
   category: "Academic" | "Social" | "Sports" | "Cultural" | "Career" | "Volunteering" | "Other";
 };
 
+import { createPagedResultSchema, PagedResult } from "@/types/pagination";
+
 // Service functions
 export const eventService = {
-  // GET /api/event/all — returns List<EventSummaryResponse> (public events only)
-  getEvents: async (): Promise<EventSummary[]> => {
-    const res = await apiClient.get("/event/all");
-    return z.array(EventSummarySchema).parse(res.data);
+  // GET /api/event/all — returns PagedResult<EventSummary> (public events only)
+  getEvents: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<EventSummary>> => {
+    const res = await apiClient.get("/event/all", { params });
+    return createPagedResultSchema(EventSummarySchema).parse(res.data);
   },
 
   // GET /api/event/{eventId} — returns one EventDetailResponse
@@ -95,15 +97,16 @@ export const eventService = {
     return EventDetailSchema.parse(res.data);
   },
 
-  getEventReservations: async (id: string): Promise<EventReservation[]> => {
-    const res = await apiClient.get(`/event/reservation/${id}`);
-    return z.array(EventReservationSchema).parse(res.data);
+  // GET /api/event/reservation/{eventId} — returns PagedResult<EventReservation>
+  getEventReservations: async (id: string, params?: { page?: number; pageSize?: number }): Promise<PagedResult<EventReservation>> => {
+    const res = await apiClient.get(`/event/reservation/${id}`, { params });
+    return createPagedResultSchema(EventReservationSchema).parse(res.data);
   },
 
-  // GET /api/event/reservations/mine — returns List<MyEventReservationResponse>
-  getMyReservations: async (): Promise<MyEventReservation[]> => {
-    const res = await apiClient.get("/event/reservations/mine");
-    return z.array(MyEventReservationSchema).parse(res.data);
+  // GET /api/event/reservations/mine — returns PagedResult<MyEventReservation>
+  getMyReservations: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<MyEventReservation>> => {
+    const res = await apiClient.get("/event/reservations/mine", { params });
+    return createPagedResultSchema(MyEventReservationSchema).parse(res.data);
   },
 
   // DELETE /api/event/reservation/{eventId} — cancel a reservation

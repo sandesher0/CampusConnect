@@ -2,6 +2,7 @@ using Communities.Ports;
 using Microsoft.Extensions.Logging;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Exceptions;
 using SharedKernel.Response;
 
@@ -25,6 +26,7 @@ public class GetCommunityFacade : IGetCommunityFacade
 
     public async Task<CommunityDetailResponse?> HandleAsync(
         Guid communityId,
+        PageRequest page,
         CancellationToken cancellationToken)
     {
         logger.LogInformation(
@@ -43,12 +45,12 @@ public class GetCommunityFacade : IGetCommunityFacade
             throw new CommunityNotFoundException(communityId);
         }
 
-        var communityMembers = await communityMemberRepository
-            .GetByCommunityIdAsync(communityId, cancellationToken);
+        var pagedMembers = await communityMemberRepository
+            .GetByCommunityIdAsync(communityId, page, cancellationToken);
 
         logger.LogInformation(
             "Found {MemberCount} members for CommunityId: {CommunityId}",
-            communityMembers.Count,
+            pagedMembers.totalCount,
             communityId);
 
         var response = new CommunityDetailResponse
@@ -57,26 +59,22 @@ public class GetCommunityFacade : IGetCommunityFacade
             CommunityName = community.CommunityName,
             CommunityType = community.CommunityType,
             CreatedBy = community.CreatedBy,
-
-            CommunityMembers = communityMembers
-        .Select(member => new CommunityMemberResponse
-        {
-            MemberId = member.Id,
-            UserId = member.UserId,
-            CommunityId = member.CommunityId,
-            MemberType = member.MemberType,
-            CreatedAt = member.CreatedAt,
-
-            User = new CommunityUserResponse
+            CommunityMembers = pagedMembers.Map(member => new CommunityMemberResponse
             {
-                UserId = member.User.Id,
-                Email = member.User.Email,
-                FirstName = member.User.FirstName,
-                LastName = member.User.LastName,
-                ProfileImageUrl = member.User.ProfileImageUrl
-            }
-        })
-        .ToList()
+                MemberId = member.Id,
+                UserId = member.UserId,
+                CommunityId = member.CommunityId,
+                MemberType = member.MemberType,
+                CreatedAt = member.CreatedAt,
+                User = new CommunityUserResponse
+                {
+                    UserId = member.User.Id,
+                    Email = member.User.Email,
+                    FirstName = member.User.FirstName,
+                    LastName = member.User.LastName,
+                    ProfileImageUrl = member.User.ProfileImageUrl
+                }
+            })
         };
 
         logger.LogInformation(

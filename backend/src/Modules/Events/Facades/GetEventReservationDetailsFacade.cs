@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Modules.Events.Mapper.ToResponse;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Exceptions;
 using SharedKernel.Response;
 
@@ -23,7 +24,11 @@ public class GetEventReservationDetailsFacade : IGetEventReservationDetailsFacad
         this.logger = logger;
     }
 
-    public async Task<List<EventReservationSummaryResponse>> HandleAsync(Guid userId, Guid eventId, CancellationToken cancellationToken)
+    public async Task<PagedResult<EventReservationSummaryResponse>> HandleAsync(
+        Guid userId,
+        Guid eventId,
+        PageRequest page,
+        CancellationToken cancellationToken)
     {
         logger.LogDebug("Fetching reservation details for event {EventId} requested by user {UserId}", eventId, userId);
 
@@ -41,12 +46,10 @@ public class GetEventReservationDetailsFacade : IGetEventReservationDetailsFacad
             throw new ForbiddenException("You don't have permission to view reservations for this event.");
         }
 
-        var eventReservations = await eventReservationRepository.GetByEventIdAsync(eventId, cancellationToken);
+        var eventReservations = await eventReservationRepository.GetByEventIdAsync(eventId, page, cancellationToken);
 
-        logger.LogInformation("Retrieved {Count} reservations for event {EventId}", eventReservations.Count, eventId);
+        logger.LogInformation("Retrieved {Count} reservations for event {EventId}", eventReservations.totalCount, eventId);
 
-        return eventReservations
-            .Select(EventReservationSummaryMapper.ToSummaryResponse)
-            .ToList();
+        return eventReservations.Map(EventReservationSummaryMapper.ToSummaryResponse);
     }
 }

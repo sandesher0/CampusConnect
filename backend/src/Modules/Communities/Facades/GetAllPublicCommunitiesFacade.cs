@@ -1,7 +1,7 @@
-using Modules.Communities.Ports;
-using Modules.Communities.Domain;
-using SharedKernel.Interfaces;
 using Microsoft.Extensions.Logging;
+using Modules.Communities.Domain;
+using Modules.Communities.Ports;
+using SharedKernel.Constants;
 
 public class GetAllPublicCommunitiesFacade : IGetAllPublicCommunitiesFacade
 {
@@ -14,9 +14,9 @@ public class GetAllPublicCommunitiesFacade : IGetAllPublicCommunitiesFacade
         this.logger = logger;
     }
 
-    public async Task<List<Community>?> HandleAsync(CancellationToken cancellationToken)
+    public async Task<PagedResult<Community>> HandleAsync(PageRequest page, CancellationToken cancellationToken)
     {
-        var communities = await communityRepository.GetAllPublicCommunitiesAsync(cancellationToken);
+        var communities = await communityRepository.GetAllPublicCommunitiesAsync(page, cancellationToken);
         return communities;
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Exceptions;
 using SharedKernel.Response;
 
@@ -13,11 +14,12 @@ public class GetMyEventReservationsController : ControllerBase
 {
     [Authorize]
     [HttpGet("reservations/mine")]
-    [ProducesResponseType(typeof(List<MyEventReservationResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<MyEventReservationResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<List<MyEventReservationResponse>>> HandleAsync(
+    public async Task<ActionResult<PagedResult<MyEventReservationResponse>>> HandleAsync(
         [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade,
         [FromServices] IGetMyEventReservationsFacade getMyEventReservationsFacade,
+        [FromQuery] PageRequest page,
         CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
@@ -28,7 +30,7 @@ public class GetMyEventReservationsController : ControllerBase
         var userId = await getUserIdByAccountIdFacade.HandleAsync(accountId, cancellationToken)
             ?? throw new AccountNotFoundException(accountId);
 
-        var reservations = await getMyEventReservationsFacade.HandleAsync(userId, cancellationToken);
+        var reservations = await getMyEventReservationsFacade.HandleAsync(userId, page, cancellationToken);
 
         return Ok(reservations);
     }

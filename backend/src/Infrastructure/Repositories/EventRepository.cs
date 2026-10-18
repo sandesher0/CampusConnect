@@ -13,15 +13,16 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
     {
     }
 
-    public async Task<List<Event>> GetAllPublicEventAsync(CancellationToken cancellationToken)
+    public async Task<PagedResult<Event>> GetAllPublicEventAsync(PageRequest page, CancellationToken cancellationToken)
     {
+        var pagedEntities = await dbSet.AsNoTracking()
+            .Where(e => e.Visibility == EventVisibility.Public &&
+                        e.DeletedAt == null &&
+                        e.EventEndDate >= DateTimeOffset.UtcNow)
+            .OrderBy(e => e.EventDate)
+            .ToPagedAsync(page, cancellationToken);
 
-        var result = await dbSet.AsNoTracking()
-                .Where(e => e.Visibility == EventVisibility.Public &&
-                       e.EventEndDate >= DateTimeOffset.UtcNow)
-                .Select(e => EventEntityToDomain.ToDomain(e))
-                .ToListAsync(cancellationToken);
-        return result;
+        return pagedEntities.Map(EventEntityToDomain.ToDomain);
     }
 
     public async Task<EventEntity?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken)

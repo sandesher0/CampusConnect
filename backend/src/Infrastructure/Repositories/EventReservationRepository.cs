@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Entities;
 using SharedKernel.Interfaces;
 
@@ -30,23 +31,23 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
             .SingleOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<List<EventReservationEntity>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
+    public async Task<PagedResult<EventReservationEntity>> GetByEventIdAsync(Guid eventId, PageRequest page, CancellationToken cancellationToken)
     {
         return await dbSet
-       .AsNoTracking()
-       .Where(r => r.EventId == eventId && r.DeletedAt == null)
-       .Include(r => r.User)
-       .OrderBy(r => r.CreatedAt)
-       .ToListAsync(cancellationToken);
+            .AsNoTracking()
+            .Where(r => r.EventId == eventId && r.DeletedAt == null)
+            .Include(r => r.User)
+            .OrderBy(r => r.CreatedAt)
+            .ToPagedAsync(page, cancellationToken);
     }
 
-    public async Task<List<EventReservationEntity>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<PagedResult<EventReservationEntity>> GetByUserIdAsync(Guid userId, PageRequest page, CancellationToken cancellationToken)
     {
         return await dbSet
             .AsNoTracking()
             .Where(r => r.UserId == userId && r.DeletedAt == null)
             .Include(r => r.Event)
             .OrderByDescending(r => r.CreatedAt)
-            .ToListAsync(cancellationToken);
+            .ToPagedAsync(page, cancellationToken);
     }
 }

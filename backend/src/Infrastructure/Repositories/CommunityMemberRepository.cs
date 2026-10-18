@@ -2,6 +2,7 @@ using Infrastructure.Mapper.ToDomain;
 using Microsoft.EntityFrameworkCore;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Entities;
 
 namespace Infrastructure.Repositories;
@@ -26,17 +27,19 @@ public class CommunityMemberRepository : BaseRepository<AppDbContext, CommunityM
         return CommunityMemberToDomain.ToDomain(communityMember);
     }
 
-    public async Task<List<CommunityMemberEntity>> GetByCommunityIdAsync(
+    public  Task<PagedResult<CommunityMemberEntity>> GetByCommunityIdAsync(
         Guid communityId,
+        PageRequest page,
         CancellationToken cancellationToken)
     {
-        return await dbSet
+        return dbSet
             .AsNoTracking()
             .Where(x =>
                 x.CommunityId == communityId &&
                 x.DeletedAt == null)
             .Include(x => x.User)
-            .ToListAsync(cancellationToken);
+            .OrderBy(x => x.CreatedAt).ThenBy(x => x.Id)
+            .ToPagedAsync(page, cancellationToken);
     }
 
 

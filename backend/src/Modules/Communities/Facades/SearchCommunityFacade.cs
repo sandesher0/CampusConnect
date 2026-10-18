@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using SharedKernel.Constants;
 
 public class SearchCommunityFacade : ISearchCommunityFacade
 {
@@ -15,8 +16,9 @@ public class SearchCommunityFacade : ISearchCommunityFacade
         this.logger = logger;
     }
 
-    public async Task<List<Community>> HandleAsync(
+    public async Task<PagedResult<Community>> HandleAsync(
         string searchKeyWord,
+        PageRequest page,
         CancellationToken cancellationToken)
     {
         logger.LogInformation(
@@ -24,11 +26,11 @@ public class SearchCommunityFacade : ISearchCommunityFacade
             searchKeyWord);
 
         var communities = await communityRepository
-            .SearchCommunityAsync(searchKeyWord, cancellationToken);
+            .SearchCommunityAsync(searchKeyWord, page, cancellationToken);
 
         logger.LogInformation(
             "Found {CommunityCount} communities for keyword: {SearchKeyword}",
-            communities.Count,
+            communities.totalCount,
             searchKeyWord);
 
         return communities;
