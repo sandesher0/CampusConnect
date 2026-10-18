@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
 using Modules.Communities.Domain;
@@ -14,6 +15,9 @@ public class GetMyCommunityController : ControllerBase
 {
     [Authorize]
     [HttpGet("mine")]
+    [ProducesResponseType(typeof(PagedResult<Community>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PagedResult<Community>>> HandleAsync(
         [FromServices] IGetMyCommunitiesFacade getMyCommunitiesFacade,
         [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade,

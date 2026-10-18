@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using Modules.Auth.Ports;
 using Api.Requests;
-using SharedKernel.Interfaces;
 using Application.Domain;
 using Application.Ports;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Modules.Auth.Ports;
+using SharedKernel.Interfaces;
 
 namespace Api.Controllers.Auth;
 
@@ -20,6 +21,8 @@ public class RegisterController : ControllerBase
     }
 
     [HttpPost("register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register([FromBody] AccountRegisterRequest request, CancellationToken cancellationToken)
     {
         var newAccount = new RegisterAccount

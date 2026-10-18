@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -8,6 +9,7 @@ namespace Api.Controllers.Auth;
 public class LogoutController : ControllerBase
 {
     [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> HandleAsync(CancellationToken cancellationToken)
     {
         Response.Cookies.Delete("accessToken", new CookieOptions

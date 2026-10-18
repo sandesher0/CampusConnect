@@ -2,6 +2,7 @@ using Api.Mapper.ToDomain;
 using Api.Requests;
 using Application.Ports;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Event;
@@ -18,6 +19,8 @@ public class EventController : ControllerBase
 
     [Authorize]
     [HttpPost("create")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleAsync(EventRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
