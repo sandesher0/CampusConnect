@@ -47,9 +47,14 @@ export default function Header() {
               Communities
             </Link>
             {isClient && user && (
-              <Link href="/community/mine" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                My Communities
-              </Link>
+              <>
+                <Link href="/community/mine" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  My Communities
+                </Link>
+                <Link href="/events/reservations/mine" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  My Reservations
+                </Link>
+              </>
             )}
           </nav>
         </div>
