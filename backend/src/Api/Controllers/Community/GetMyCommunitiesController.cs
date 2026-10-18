@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Exceptions;
 
 namespace Api.Controllers.Communities;
@@ -13,7 +14,11 @@ public class GetMyCommunityController : ControllerBase
 {
     [Authorize]
     [HttpGet("mine")]
-    public async Task<ActionResult<List<Community>>> HandleAsync([FromServices] IGetMyCommunitiesFacade getMyCommunitiesFacade, [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade, CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<Community>>> HandleAsync(
+        [FromServices] IGetMyCommunitiesFacade getMyCommunitiesFacade,
+        [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade,
+        [FromQuery] PageRequest page,
+        CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
         {
@@ -26,7 +31,7 @@ public class GetMyCommunityController : ControllerBase
             throw new AccountNotFoundException(accountId);
         }
 
-        var myCommunities = await getMyCommunitiesFacade.HandleAsync(userId.Value, cancellationToken);
+        var myCommunities = await getMyCommunitiesFacade.HandleAsync(userId.Value, page, cancellationToken);
         return Ok(myCommunities);
     }
 }

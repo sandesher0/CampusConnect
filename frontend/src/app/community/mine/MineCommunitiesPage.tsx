@@ -3,23 +3,30 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/apiError";
+import Pagination from "@/components/common/Pagination";
 
 export default function MineCommunitiesPage() {
   const { user } = useAuthStore();
+  const [page, setPage] = useState(1);
 
   const {
-    data: communities = [],
+    data,
     status,
+    isFetching,
     error,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.communities.mine(),
-    queryFn: () => communityService.getMyCommunities(),
+    queryKey: [...queryKeys.communities.mine(), page],
+    queryFn: () => communityService.getMyCommunities({ page, pageSize: 12 }),
   });
+
+  const communities = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div className="min-h-[calc(100vh-160px)] py-12">
@@ -153,6 +160,15 @@ export default function MineCommunitiesPage() {
               );
             })}
           </div>
+        )}
+
+        {status === "success" && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
         )}
       </div>
     </div>

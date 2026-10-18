@@ -83,10 +83,11 @@ function CreateEventForm() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Fetch user's communities to populate the dropdown
-  const { data: myCommunities = [], isLoading: communitiesLoading } = useQuery({
+  const { data: myCommunitiesData, isLoading: communitiesLoading } = useQuery({
     queryKey: queryKeys.communities.mine(),
-    queryFn: () => communityService.getMyCommunities(),
+    queryFn: () => communityService.getMyCommunities({ page: 1, pageSize: 50 }),
   });
+  const myCommunities = myCommunitiesData?.items ?? [];
 
   const {
     register,

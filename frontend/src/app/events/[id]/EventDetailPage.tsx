@@ -9,6 +9,7 @@ import { Suspense, useState } from "react";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
+import Pagination from "@/components/common/Pagination";
 
 export default function EventDetailPage() {
   return (
@@ -24,6 +25,7 @@ function EventDetailInner() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
+  const [reservationsPage, setReservationsPage] = useState(1);
 
   const {
     data: event,
@@ -39,21 +41,26 @@ function EventDetailInner() {
 
   const isOwner = event?.createdBy === user?.user?.id;
   const {
-    data: reservations = [],
+    data: reservationsData,
     status: reservationsStatus,
+    isFetching: isFetchingReservations,
   } = useQuery({
-    queryKey: queryKeys.events.reservations(id),
-    queryFn: () => eventService.getEventReservations(id),
+    queryKey: [...queryKeys.events.reservations(id), reservationsPage],
+    queryFn: () => eventService.getEventReservations(id, { page: reservationsPage, pageSize: 20 }),
     enabled: Boolean(id && event && isOwner),
   });
 
-  const { data: myReservations = [] } = useQuery({
+  const reservations = reservationsData?.items ?? [];
+  const totalReservations = reservationsData?.totalCount ?? 0;
+  const totalReservationPages = reservationsData?.totalPages ?? 1;
+
+  const { data: myReservationsData } = useQuery({
     queryKey: queryKeys.events.myReservations(),
-    queryFn: () => eventService.getMyReservations(),
+    queryFn: () => eventService.getMyReservations({ page: 1, pageSize: 50 }),
     enabled: Boolean(user),
   });
 
-  const isReservedByMe = myReservations.some((r) => r.eventId === id);
+  const isReservedByMe = (myReservationsData?.items ?? []).some((r) => r.eventId === id);
 
   const joinMutation = useMutation({
     mutationFn: () =>
@@ -225,7 +232,7 @@ function EventDetailInner() {
                 <div>
                   <h2 className="text-lg font-medium text-gray-900">Reservations</h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    {reservations.length} {reservations.length === 1 ? "attendee" : "attendees"}
+                    {totalReservations} {totalReservations === 1 ? "attendee" : "attendees"}
                   </p>
                 </div>
               </div>
@@ -241,35 +248,44 @@ function EventDetailInner() {
                   No reservations yet.
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-100 rounded-lg border border-gray-100 px-4">
-                  {reservations.map((reservation) => (
-                    <li key={reservation.id} className="flex items-center gap-3 py-3">
-                      {reservation.profileImageUrl ? (
-                        <img
-                          src={reservation.profileImageUrl}
-                          alt={`${reservation.firstName} ${reservation.lastName}`}
-                          className="h-9 w-9 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
-                          {reservation.firstName.charAt(0)}{reservation.lastName.charAt(0)}
+                <>
+                  <ul className="divide-y divide-gray-100 rounded-lg border border-gray-100 px-4">
+                    {reservations.map((reservation) => (
+                      <li key={reservation.id} className="flex items-center gap-3 py-3">
+                        {reservation.profileImageUrl ? (
+                          <img
+                            src={reservation.profileImageUrl}
+                            alt={`${reservation.firstName} ${reservation.lastName}`}
+                            className="h-9 w-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                            {reservation.firstName.charAt(0)}{reservation.lastName.charAt(0)}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-900">
+                            {reservation.firstName} {reservation.lastName}
+                          </p>
+                          <p className="truncate text-xs text-gray-500">{reservation.email}</p>
                         </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900">
-                          {reservation.firstName} {reservation.lastName}
-                        </p>
-                        <p className="truncate text-xs text-gray-500">{reservation.email}</p>
-                      </div>
-                      <time
-                        dateTime={reservation.reservedAt}
-                        className="shrink-0 text-right text-xs text-gray-400"
-                      >
-                        {new Date(reservation.reservedAt).toLocaleDateString()}
-                      </time>
-                    </li>
-                  ))}
-                </ul>
+                        <time
+                          dateTime={reservation.reservedAt}
+                          className="shrink-0 text-right text-xs text-gray-400"
+                        >
+                          {new Date(reservation.reservedAt).toLocaleDateString()}
+                        </time>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Pagination
+                    page={reservationsPage}
+                    totalPages={totalReservationPages}
+                    onPageChange={setReservationsPage}
+                    isLoading={isFetchingReservations}
+                  />
+                </>
               )}
             </div>
           )}

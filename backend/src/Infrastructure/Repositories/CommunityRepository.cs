@@ -14,41 +14,46 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
     {
 
     }
-    public async Task<List<Community>> GetAllPublicCommunitiesAsync(CancellationToken cancellationToken)
+    public async Task<PagedResult<Community>> GetAllPublicCommunitiesAsync(PageRequest page, CancellationToken cancellationToken)
     {
-        return await dbSet
-        .AsNoTracking()
-        .Where(x => x.CommunityType == CommunityType.Public)
-        .Select(x => CommunityEntityToDomain.ToDomain(x))
-        .ToListAsync(cancellationToken);
+        var pagedEntities = await dbSet
+            .AsNoTracking()
+            .Where(x => x.CommunityType == CommunityType.Public && x.DeletedAt == null)
+            .OrderBy(x => x.CommunityName)
+            .ToPagedAsync(page, cancellationToken);
+
+        return pagedEntities.Map(CommunityEntityToDomain.ToDomain);
     }
 
-    public async Task<List<Community>> GetMyCommunitiesAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<PagedResult<Community>> GetMyCommunitiesAsync(Guid userId, PageRequest page, CancellationToken cancellationToken)
     {
         var communityMember = context.Set<CommunityMemberEntity>();
-        return await dbSet
-                .AsNoTracking()
-                .Where(c => c.DeletedAt == null && (
-                    c.CreatedBy == userId ||
-                    communityMember.Any(m =>
+        var pagedEntities = await dbSet
+            .AsNoTracking()
+            .Where(c => c.DeletedAt == null && (
+                c.CreatedBy == userId ||
+                communityMember.Any(m =>
                     m.CommunityId == c.Id &&
                     m.UserId == userId &&
                     m.DeletedAt == null)
-                ))
-                .Select(x => CommunityEntityToDomain.ToDomain(x))
-                .ToListAsync(cancellationToken);
+            ))
+            .OrderBy(x => x.CommunityName)
+            .ToPagedAsync(page, cancellationToken);
+
+        return pagedEntities.Map(CommunityEntityToDomain.ToDomain);
     }
 
-    public async Task<List<Community>> SearchCommunityAsync(string searchKeyWord, CancellationToken cancellationToken)
+    public async Task<PagedResult<Community>> SearchCommunityAsync(string searchKeyWord, PageRequest page, CancellationToken cancellationToken)
     {
-        var foundCommunities = await dbSet.
-                                AsNoTracking().
-                                Where(
-                                    c => c.DeletedAt == null &&
-                                    c.CommunityType == CommunityType.Public &&
-                                    EF.Functions.ILike(c.CommunityName, $"%{searchKeyWord}%"))
-                                    .Select(x => CommunityEntityToDomain.ToDomain(x)).ToListAsync(cancellationToken);
+        var pagedEntities = await dbSet
+            .AsNoTracking()
+            .Where(
+                c => c.DeletedAt == null &&
+                c.CommunityType == CommunityType.Public &&
+                EF.Functions.ILike(c.CommunityName, $"%{searchKeyWord}%"))
+            .OrderBy(x => x.CommunityName)
+            .ToPagedAsync(page, cancellationToken);
 
-        return foundCommunities;
+        return pagedEntities.Map(CommunityEntityToDomain.ToDomain);
     }
 }

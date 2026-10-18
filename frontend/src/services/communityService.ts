@@ -28,13 +28,15 @@ export const CommunityMemberSchema = z.object({
   }),
 });
 
+import { createPagedResultSchema, PagedResult } from "@/types/pagination";
+
 // Detail schema — matches CommunityDetailResponse
 export const CommunityDetailSchema = z.object({
   communityId: z.string(),
   communityName: z.string(),
   communityType: z.union([z.string(), z.number()]).transform((v) => String(v)),
   createdBy: z.string(),
-  communityMembers: z.array(CommunityMemberSchema).default([]),
+  communityMembers: createPagedResultSchema(CommunityMemberSchema),
 });
 
 export type Community = z.infer<typeof CommunitySchema>;
@@ -43,21 +45,21 @@ export type CommunityMember = z.infer<typeof CommunityMemberSchema>;
 
 // Service functions
 export const communityService = {
-  // GET /api/communities/all — returns List<Community>
-  getCommunities: async (filters?: Record<string, any>): Promise<Community[]> => {
-    const res = await apiClient.get("/communities/all", { params: filters });
-    return z.array(CommunitySchema).parse(res.data);
+  // GET /api/communities/all — returns PagedResult<Community>
+  getCommunities: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<Community>> => {
+    const res = await apiClient.get("/communities/all", { params });
+    return createPagedResultSchema(CommunitySchema).parse(res.data);
   },
 
-  // GET /api/community/search/{communityName} — returns matching public communities
-  searchCommunities: async (communityName: string): Promise<Community[]> => {
-    const res = await apiClient.get(`/community/search/${encodeURIComponent(communityName)}`);
-    return z.array(CommunitySchema).parse(res.data);
+  // GET /api/community/search/{communityName} — returns matching public communities (PagedResult<Community>)
+  searchCommunities: async (communityName: string, params?: { page?: number; pageSize?: number }): Promise<PagedResult<Community>> => {
+    const res = await apiClient.get(`/community/search/${encodeURIComponent(communityName)}`, { params });
+    return createPagedResultSchema(CommunitySchema).parse(res.data);
   },
 
   // GET /api/community/{communityId} — returns CommunityDetailResponse
-  getCommunityById: async (id: string): Promise<CommunityDetail> => {
-    const res = await apiClient.get(`/community/${id}`);
+  getCommunityById: async (id: string, params?: { page?: number; pageSize?: number }): Promise<CommunityDetail> => {
+    const res = await apiClient.get(`/community/${id}`, { params });
     return CommunityDetailSchema.parse(res.data);
   },
 
@@ -66,10 +68,10 @@ export const communityService = {
     await apiClient.post("/community/create", data);
   },
 
-  // GET /api/community/mine — returns communities the logged-in user belongs to
-  getMyCommunities: async (): Promise<Community[]> => {
-    const res = await apiClient.get("/community/mine");
-    return z.array(CommunitySchema).parse(res.data);
+  // GET /api/community/mine — returns communities the logged-in user belongs to (PagedResult<Community>)
+  getMyCommunities: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<Community>> => {
+    const res = await apiClient.get("/community/mine", { params });
+    return createPagedResultSchema(CommunitySchema).parse(res.data);
   },
 
   // POST /api/community/{id}/join  (endpoint defined in CommunityController if present)

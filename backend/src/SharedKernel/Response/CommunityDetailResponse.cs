@@ -9,5 +9,5 @@ public sealed record CommunityDetailResponse
     public required CommunityType CommunityType { get; init; }
     public required Guid CreatedBy { get; init; }
 
-    public List<CommunityMemberResponse> CommunityMembers { get; init; } = [];
+    public required PagedResult<CommunityMemberResponse> CommunityMembers { get; init; }
 }

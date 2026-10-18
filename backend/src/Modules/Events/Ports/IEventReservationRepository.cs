@@ -1,3 +1,4 @@
+using SharedKernel.Constants;
 using SharedKernel.Entities;
 using SharedKernel.Interfaces;
 
@@ -7,6 +8,6 @@ public interface IEventReservationRepository : IBaseRepository<EventReservationE
 {
     Task<EventReservationEntity?> CheckEventReservation(Guid eventId, Guid UserId, CancellationToken cancellationToken);
     Task<EventReservationEntity?> GetActiveReservationAsync(Guid eventId, Guid userId, CancellationToken cancellationToken);
-    Task<List<EventReservationEntity>> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken);
-    Task<List<EventReservationEntity>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken);
+    Task<PagedResult<EventReservationEntity>> GetByEventIdAsync(Guid eventId, PageRequest page, CancellationToken cancellationToken);
+    Task<PagedResult<EventReservationEntity>> GetByUserIdAsync(Guid userId, PageRequest page, CancellationToken cancellationToken);
 }

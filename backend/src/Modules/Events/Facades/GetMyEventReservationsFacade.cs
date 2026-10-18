@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Modules.Events.Mapper.ToResponse;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Response;
 
 namespace Modules.Events.Facades;
@@ -18,22 +19,21 @@ public class GetMyEventReservationsFacade : IGetMyEventReservationsFacade
         this.logger = logger;
     }
 
-    public async Task<List<MyEventReservationResponse>> HandleAsync(
+    public async Task<PagedResult<MyEventReservationResponse>> HandleAsync(
         Guid userId,
+        PageRequest page,
         CancellationToken cancellationToken)
     {
         logger.LogInformation(
             "Fetching event reservations for user {UserId}", userId);
 
         var reservations = await eventReservationRepository
-            .GetByUserIdAsync(userId, cancellationToken);
+            .GetByUserIdAsync(userId, page, cancellationToken);
 
         logger.LogInformation(
             "Found {Count} reservations for user {UserId}",
-            reservations.Count, userId);
+            reservations.totalCount, userId);
 
-        return reservations
-            .Select(MyEventReservationMapper.ToResponse)
-            .ToList();
+        return reservations.Map(MyEventReservationMapper.ToResponse);
     }
 }

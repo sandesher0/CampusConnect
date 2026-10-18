@@ -10,6 +10,9 @@ import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/apiError";
 
+import { useState } from "react";
+import Pagination from "@/components/common/Pagination";
+
 export default function CommunityDetailPage() {
   return (
     <Suspense fallback={<div className="py-8 text-center text-gray-500">Loading...</div>}>
@@ -24,10 +27,11 @@ function CommunityDetailInner() {
   const fromMine = searchParams.get("from") === "mine";
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const [membersPage, setMembersPage] = useState(1);
 
-  const { data: community, status, error, refetch } = useQuery({
-    queryKey: queryKeys.communities.detail(id),
-    queryFn: () => communityService.getCommunityById(id),
+  const { data: community, status, isFetching, error, refetch } = useQuery({
+    queryKey: [...queryKeys.communities.detail(id), membersPage],
+    queryFn: () => communityService.getCommunityById(id, { page: membersPage, pageSize: 20 }),
     enabled: !!id,
   });
 
@@ -79,8 +83,11 @@ function CommunityDetailInner() {
   const isPublic =
     community.communityType === "1" || community.communityType === "Public";
 
+  const memberItems = community.communityMembers.items;
+  const totalMembers = community.communityMembers.totalCount;
+
   const isOwner = community.createdBy === user?.user?.id;
-  const isMember = isOwner || community.communityMembers.some(
+  const isMember = isOwner || memberItems.some(
     (member) => member.userId === user?.user?.id
   );
 
@@ -126,8 +133,7 @@ function CommunityDetailInner() {
                 )}
               </div>
               <p className="mt-1 text-sm text-gray-500">
-                {community.communityMembers.length}{" "}
-                {community.communityMembers.length === 1 ? "member" : "members"}
+                {totalMembers} {totalMembers === 1 ? "member" : "members"}
               </p>
             </div>
 
@@ -170,13 +176,13 @@ function CommunityDetailInner() {
             Members
           </h2>
 
-          {community.communityMembers.length === 0 ? (
+          {memberItems.length === 0 ? (
             <p className="text-sm text-gray-500 py-4 text-center border border-dashed border-gray-200 rounded-lg">
               No members yet.
             </p>
           ) : (
             <ul className="divide-y divide-gray-100">
-              {community.communityMembers.map((member) => (
+              {memberItems.map((member) => (
                 <li key={member.memberId} className="flex items-center gap-3 py-3">
                   <div className="shrink-0 h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
                     {member.user.profileImageUrl ? (
@@ -204,6 +210,13 @@ function CommunityDetailInner() {
               ))}
             </ul>
           )}
+
+          <Pagination
+            page={community.communityMembers.page}
+            totalPages={community.communityMembers.totalPages}
+            onPageChange={setMembersPage}
+            isLoading={isFetching}
+          />
         </div>
       </div>
     </div>

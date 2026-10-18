@@ -10,6 +10,8 @@ import { useSearchParams } from "next/navigation";
 import Button from "@/components/common/Button";
 import { getApiErrorMessage } from "@/lib/apiError";
 
+import Pagination from "@/components/common/Pagination";
+
 export default function CommunityPage() {
   return (
     <Suspense fallback={<div className="min-h-[calc(100vh-160px)] flex items-center justify-center text-gray-500">Loading...</div>}>
@@ -21,21 +23,26 @@ export default function CommunityPage() {
 function CommunityPageInner() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [page, setPage] = useState(1);
   const searchTerm = search.trim();
 
   const {
-    data: communities = [],
+    data,
     status,
+    isFetching,
     error,
     refetch,
   } = useQuery({
     queryKey: searchTerm
-      ? queryKeys.communities.search(searchTerm)
-      : queryKeys.communities.all,
+      ? [...queryKeys.communities.search(searchTerm), page]
+      : [...queryKeys.communities.all, page],
     queryFn: () => searchTerm
-      ? communityService.searchCommunities(searchTerm)
-      : communityService.getCommunities(),
+      ? communityService.searchCommunities(searchTerm, { page, pageSize: 12 })
+      : communityService.getCommunities({ page, pageSize: 12 }),
   });
+
+  const communities = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   if (status === "error") {
     return (
@@ -166,6 +173,15 @@ function CommunityPageInner() {
               </Link>
             ))}
           </div>
+        )}
+
+        {status === "success" && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
         )}
       </div>
     </div>

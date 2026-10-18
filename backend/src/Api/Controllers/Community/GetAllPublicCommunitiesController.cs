@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using SharedKernel.Constants;
 
 namespace Api.Controllers.Communities;
 
@@ -19,11 +20,12 @@ public class GetAllPublicCommunitiesController : ControllerBase
 
     [Authorize]
     [HttpGet("all")]
-    public async Task<ActionResult<List<Community>>> HandleAsync(
+    public async Task<ActionResult<PagedResult<Community>>> HandleAsync(
+        [FromQuery] PageRequest page,
         CancellationToken cancellationToken)
     {
         var communities = await getAllPublicCommunitiesFacade
-            .HandleAsync(cancellationToken);
+            .HandleAsync(page, cancellationToken);
 
         return Ok(communities);
     }

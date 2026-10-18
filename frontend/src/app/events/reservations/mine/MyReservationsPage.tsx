@@ -18,20 +18,27 @@ const CATEGORY_COLORS: Record<string, string> = {
   Other: "bg-gray-100 text-gray-600",
 };
 
+import Pagination from "@/components/common/Pagination";
+
 export default function MyReservationsPage() {
   const queryClient = useQueryClient();
   const [cancellingEventId, setCancellingEventId] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const {
-    data: reservations = [],
+    data,
     status,
+    isFetching,
     error,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.events.myReservations(),
-    queryFn: () => eventService.getMyReservations(),
+    queryKey: [...queryKeys.events.myReservations(), page],
+    queryFn: () => eventService.getMyReservations({ page, pageSize: 10 }),
   });
+
+  const reservations = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   const cancelMutation = useMutation({
     mutationFn: (eventId: string) => eventService.cancelReservation(eventId),
@@ -241,6 +248,15 @@ export default function MyReservationsPage() {
               );
             })}
           </div>
+        )}
+
+        {status === "success" && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
         )}
       </div>
     </div>

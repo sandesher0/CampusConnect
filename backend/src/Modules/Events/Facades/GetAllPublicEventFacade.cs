@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Modules.Events.Domain;
 using Modules.Events.Mapper.ToResponse;
 using Modules.Events.Ports;
+using SharedKernel.Constants;
 using SharedKernel.Response;
 
 namespace Modules.Events.Facades;
@@ -20,13 +21,10 @@ public class GetAllPublicEventFacade : IGetAllPublicEventFacade
         this.logger = logger;
     }
 
-    public async Task<List<EventSummaryResponse>> HandleAsync(CancellationToken cancellationToken)
+    public async Task<PagedResult<EventSummaryResponse>> HandleAsync(PageRequest page, CancellationToken cancellationToken)
     {
-        var events = await eventRepository.GetAllPublicEventAsync(cancellationToken);
+        var pagedEvents = await eventRepository.GetAllPublicEventAsync(page, cancellationToken);
 
-        return events
-            .Select(EventDomainToSummaryResponse.ToResponse)
-            .ToList();
+        return pagedEvents.Map(EventDomainToSummaryResponse.ToResponse);
     }
-
 }
