@@ -4,7 +4,7 @@ import { toApiError } from "@/lib/apiError";
 import { useAuthStore } from "@/stores/authStore";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
+  baseURL: "/api",
   withCredentials: true,
   timeout: 15000, // 15s timeout for free-tier backend cold starts
   headers: {
