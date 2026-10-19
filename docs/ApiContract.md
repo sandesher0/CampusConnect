@@ -37,8 +37,8 @@
 ### JSON Serialization & Model Formatting
 - ASP.NET Core defaults to **camelCase** for JSON property names (e.g. `communityName`, `eventDate`, `items`, `totalCount`).
 - **Enums:**
-  - `CommunityStatusType`, `CommunityType`, `Department`, `EventCategory`, `EventVisibility` all have `[JsonConverter(typeof(JsonStringEnumConverter))]`. They serialize as strings (e.g. `"Public"`, `"Academic"`).
-  - Note: `MemberType` currently does **not** have `[JsonConverter(typeof(JsonStringEnumConverter))]`, so it serializes as an integer numeric enum (`0: None`, `1: ClubOfficer`, `2: Student`, `3: ClubMember`, `4: StudentAffairsStaff`).
+  - `CommunityStatusType`, `CommunityType`, `Department`, `EventCategory`, `EventVisibility`, and `MemberType` all have `[JsonConverter(typeof(JsonStringEnumConverter))]`. They serialize as strings (e.g. `"Public"`, `"Academic"`, `"ClubOfficer"`).
+  - `MemberType` values: `"None"`, `"ClubOfficer"`, `"Student"`, `"ClubMember"`, `"StudentAffairsStaff"`.
 - **Dates:** `DateTimeOffset` serializes to ISO 8601 UTC strings with offset (e.g. `"2026-10-19T14:30:00+00:00"`).
 
 ---
@@ -266,7 +266,7 @@ Paged endpoints use `PageRequest` query binding (`[FromQuery] PageRequest page`)
           "memberId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           "communityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "memberType": 1,
+          "memberType": "ClubOfficer",
           "createdAt": "2026-10-19T10:00:00+00:00",
           "modifiedAt": null,
           "user": {
@@ -504,11 +504,21 @@ To maintain complete parity and prevent silent drift when creating new features:
 
 ---
 
-## 6. OpenAPI / Swagger Generation
-The backend uses .NET 10 Microsoft.AspNetCore.OpenApi (`AddOpenApi()` and `MapOpenApi()`), accessible at `/openapi/v1.json` when running in development mode.
-- **Proposed Workflow:** When approved, add `openapi-typescript` to generate strict TypeScript types directly from the backend endpoint schema via `npm run gen:api`:
-  ```bash
-  npx openapi-typescript http://localhost:5000/openapi/v1.json -o src/types/api.generated.ts
-  ```
-- This ensures compile-time drift detection whenever the backend API schema is modified.
+## 6. Keeping in Sync (OpenAPI Workflow)
+The backend exposes its OpenAPI 3.1 schema at `/openapi/v1.json` when running in development mode.
+To keep the frontend contract in perfect sync whenever the backend changes:
+1. **Change backend:** Update domain, entities, controllers, or DTOs.
+2. **Run backend:** Start the local backend (`dotnet run --project backend/src/Api/Api.csproj`).
+3. **Generate types:** Run the generator in `frontend/`:
+   ```bash
+   npm run gen:api
+   ```
+   *(Defaults to `http://localhost:5252/openapi/v1.json` or custom `OPENAPI_URL`)*.
+4. **Fix TypeScript errors:** Address any compile errors caused by renamed/modified backend types.
+5. **Quality gates:** Run and ensure all three gates pass:
+   ```bash
+   npm run typecheck && npm run lint && npm run build
+   ```
+6. **Commit the generated file:** Always commit `frontend/src/types/api.generated.ts` with your changes so CI/production builds don't depend on a running development backend.
+
 
