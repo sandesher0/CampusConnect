@@ -1,13 +1,15 @@
-// Ref: workflow.md §4 Architecture Patterns | Feature: Events
+// Ref: workflow.md §4 Architecture Patterns | Feature: Events Page
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
+import Button from "@/components/common/Button";
 import { getApiErrorMessage } from "@/lib/apiError";
 import Pagination from "@/components/common/Pagination";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
+import type { EventSummaryResponse } from "@/types/event";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Academic: "bg-blue-50 text-blue-700",
@@ -20,161 +22,112 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function EventsPage() {
-  const [page, setPage] = useState(1);
+  return (
+    <Suspense fallback={<div className="min-h-[calc(100vh-160px)] flex items-center justify-center text-gray-500">Loading events...</div>}>
+      <EventsPageInner />
+    </Suspense>
+  );
+}
 
-  const { data, status, isFetching, error, refetch } = useQuery({
-    queryKey: [...queryKeys.events.lists(), page],
-    queryFn: () => eventService.getEvents({ page, pageSize: 10 }),
+function EventsPageInner() {
+  const {
+    items: events,
+    page,
+    totalPages,
+    setPage,
+    status,
+    isFetching,
+    error,
+    refetch,
+  } = usePaginatedQuery<EventSummaryResponse>({
+    queryKeyPrefix: queryKeys.events.all(),
+    queryFn: (params) => eventService.getEvents(params),
+    defaultPageSize: 12,
   });
 
-  const events = data?.items ?? [];
-  const totalPages = data?.totalPages ?? 1;
-
-  if (status === "pending") return (
-    <div className="py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="h-8 w-40 bg-gray-100 rounded animate-pulse" />
-          <div className="h-10 w-32 bg-gray-100 rounded-md animate-pulse" />
-        </div>
-        <div className="space-y-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 bg-gray-100 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-100 rounded w-1/2" />
-                  <div className="h-3 bg-gray-100 rounded w-1/3" />
-                  <div className="h-3 bg-gray-100 rounded w-3/4" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+  if (status === "error") {
+    return (
+      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
+        <p className="text-gray-600 mb-4" role="alert">
+          {getApiErrorMessage(error, "Failed to load events.")}
+        </p>
+        <Button variant="outline" onClick={() => void refetch()}>
+          Try Again
+        </Button>
       </div>
-    </div>
-  );
-
-  if (status === "error") return (
-    <div className="py-8 text-center">
-      <p className="text-red-600" role="alert">{getApiErrorMessage(error, "Failed to load events.")}</p>
-      <button onClick={() => void refetch()} className="mt-3 text-sm text-gray-900 underline">
-        Try again
-      </button>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-[calc(100vh-160px)] py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Campus Events</h1>
             <p className="mt-1 text-sm text-gray-500">
-              {events.length > 0 ? `${events.length} public event${events.length === 1 ? "" : "s"}` : ""}
+              Explore upcoming activities, workshops, and gatherings
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/events/reservations/mine"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 text-gray-900 transition-colors whitespace-nowrap"
-            >
-              My Reservations
-            </Link>
-            <Link
-              href="/events/create"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
-            >
-              + Create Event
-            </Link>
-          </div>
+          <Link
+            href="/events/create"
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
+          >
+            + Host Event
+          </Link>
         </div>
 
-        {/* Events list */}
-        {events.length === 0 ? (
-          <div className="text-center py-16 border border-dashed border-gray-200 rounded-lg">
-            <p className="text-gray-500 text-sm">No public events yet. Be the first to create one!</p>
-            <Link
-              href="/events/create"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors mt-4"
-            >
-              Create Event
-            </Link>
+        {status === "pending" ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse space-y-3">
+                <div className="h-5 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 bg-gray-100 rounded w-1/2" />
+                <div className="h-4 bg-gray-100 rounded w-1/3" />
+              </div>
+            ))}
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+            <h3 className="text-base font-semibold text-gray-900">No events scheduled</h3>
+            <p className="mt-1 text-sm text-gray-500">Check back later or host one yourself!</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {events.map((event) => {
-              const startDate = new Date(event.eventDate);
-              const endDate = new Date(event.eventEndDate);
-              const categoryColor = CATEGORY_COLORS[event.category] ?? CATEGORY_COLORS.Other;
-
-              return (
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="group block rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                  className="bg-white rounded-lg border border-gray-200 p-6 hover:border-gray-300 transition-shadow shadow-sm hover:shadow flex flex-col justify-between"
                 >
-                  <div className="p-5">
-                    <div className="flex items-start gap-4">
-                      {/* Date block */}
-                      <div className="shrink-0 h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 flex flex-col items-center justify-center">
-                        <span className="text-xs text-gray-500 leading-none">
-                          {startDate.toLocaleString("default", { month: "short" })}
-                        </span>
-                        <span className="text-lg font-bold text-gray-900 leading-tight">
-                          {startDate.getDate()}
-                        </span>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-base font-semibold text-gray-900 group-hover:text-gray-700 transition-colors truncate">
-                            {event.title}
-                          </h3>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0 ${categoryColor}`}>
-                            {event.category}
-                          </span>
-                          {(event.visibility === "Public" || event.visibility === "1") && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 shrink-0">
-                              Public
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500 mb-2">
-                          <span>
-                            {startDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                            {" · "}
-                            {startDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                            {" – "}
-                            {endDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                          </span>
-                          <span className="mx-2 text-gray-300">|</span>
-                          <span>{event.location}</span>
-                        </p>
-                      </div>
-
-                      {/* Arrow */}
-                      <svg className="shrink-0 h-4 w-4 text-gray-300 group-hover:text-gray-500 mt-1 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                  <div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${CATEGORY_COLORS[event.category] ?? "bg-gray-100 text-gray-600"}`}>
+                        {event.category}
+                      </span>
+                      <span className="text-xs text-gray-500">{event.visibility}</span>
                     </div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-2 hover:text-blue-600 transition-colors">
+                      {event.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-1">
+                      📍 {event.location}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      📅 {new Date(event.eventDate).toLocaleDateString()} at {new Date(event.eventDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
                   </div>
                 </Link>
-              );
-            })}
-          </div>
-        )}
+              ))}
+            </div>
 
-        {status === "success" && (
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            isLoading={isFetching}
-          />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              isLoading={isFetching}
+            />
+          </>
         )}
       </div>
     </div>

@@ -4,26 +4,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { communityService } from "@/services/communityService";
+import { queryKeys } from "@/services/queryKeys";
 import Button from "@/components/common/Button";
 import { getApiErrorMessage } from "@/lib/apiError";
-
-const createCommunitySchema = z.object({
-  communityName: z
-    .string()
-    .min(3, "Community name must be at least 3 characters")
-    .max(100, "Community name must be less than 100 characters")
-    .trim(),
-  communityType: z.union([z.literal("Public"), z.literal("Private")], {
-    error: "Please select a community type",
-  }),
-});
-
-type CreateCommunityValues = z.infer<typeof createCommunitySchema>;
+import { handleServerValidationErrors } from "@/utils/formErrors";
+import { createCommunitySchema, type CreateCommunityValues } from "@/validations/community";
 
 export default function CreateCommunityPage() {
   const router = useRouter();
@@ -34,6 +23,7 @@ export default function CreateCommunityPage() {
     register,
     handleSubmit,
     watch,
+    setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<CreateCommunityValues>({
     resolver: zodResolver(createCommunitySchema),
@@ -47,17 +37,18 @@ export default function CreateCommunityPage() {
 
   const mutation = useMutation({
     mutationFn: (data: CreateCommunityValues) =>
-      communityService.createCommunity({
-        communityName: data.communityName,
-        communityType: data.communityType,
-      }),
-    onSuccess: () => {
-      // Invalidate the communities list so it re-fetches
-      queryClient.invalidateQueries({ queryKey: ["communities"] });
+      communityService.createCommunity(data),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.communities.all() }),
+      ]);
       router.push("/community");
     },
     onError: (err) => {
-      setServerError(getApiErrorMessage(err, "Failed to create community. Please try again."));
+      const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
+      if (!hasFieldErrors) {
+        setServerError(getApiErrorMessage(err, "Failed to create community. Please try again."));
+      }
     },
   });
 
@@ -69,21 +60,15 @@ export default function CreateCommunityPage() {
   return (
     <div className="min-h-[calc(100vh-160px)] py-12">
       <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
-
-        {/* Back nav */}
         <div className="mb-6">
           <Link
             href="/community"
             className="text-sm text-gray-500 hover:text-gray-900 inline-flex items-center gap-1"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Communities
+            ← Back to Communities
           </Link>
         </div>
 
-        {/* Heading */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Create a Community</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -91,16 +76,14 @@ export default function CreateCommunityPage() {
           </p>
         </div>
 
-        {/* Form card */}
         <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
           {serverError && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm">
+            <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
               {serverError}
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Community Name */}
             <div>
               <label
                 htmlFor="communityName"
@@ -126,13 +109,11 @@ export default function CreateCommunityPage() {
               )}
             </div>
 
-            {/* Community Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Visibility <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-3">
-                {/* Public option */}
                 <label
                   className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${
                     selectedType === "Public"
@@ -147,24 +128,11 @@ export default function CreateCommunityPage() {
                     className="sr-only"
                   />
                   <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">Public</span>
-                    </div>
+                    <span className="text-sm font-medium text-gray-900">Public</span>
                     <p className="text-xs text-gray-500">Anyone can see and join</p>
                   </div>
-                  {selectedType === "Public" && (
-                    <div className="absolute top-3 right-3">
-                      <svg className="h-4 w-4 text-gray-900" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
                 </label>
 
-                {/* Private option */}
                 <label
                   className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${
                     selectedType === "Private"
@@ -179,21 +147,9 @@ export default function CreateCommunityPage() {
                     className="sr-only"
                   />
                   <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">Private</span>
-                    </div>
+                    <span className="text-sm font-medium text-gray-900">Private</span>
                     <p className="text-xs text-gray-500">Invite-only membership</p>
                   </div>
-                  {selectedType === "Private" && (
-                    <div className="absolute top-3 right-3">
-                      <svg className="h-4 w-4 text-gray-900" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
                 </label>
               </div>
               {errors.communityType && (
@@ -203,7 +159,6 @@ export default function CreateCommunityPage() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-2">
               <Link href="/community">
                 <Button variant="outline" type="button">

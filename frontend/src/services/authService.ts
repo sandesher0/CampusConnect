@@ -1,79 +1,52 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: API Layer
 import apiClient from "@/config/apiClient";
-import { z } from "zod";
 import { userService } from "./userService";
+import type { AccountInfo } from "@/types/user";
 
-// Auth schemas - adjusted to match actual backend responses
-export const LoginResponseSchema = z.any();
+export interface RegisterPayload {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string | null;
+}
 
-export const RegisterResponseSchema = z.object({
-  message: z.string().optional(),
-});
+export interface LoginPayload {
+  username: string;
+  password: string;
+}
 
-// User schema (shared with userService)
-export const UserSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  username: z.string(),
-  user: z.object({
-    id: z.string(),
-    email: z.string().email(),
-    firstName: z.string(),
-    lastName: z.string(),
-  })
-});
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+}
 
-export type LoginResponse = z.infer<typeof LoginResponseSchema>;
-export type RegisterResponse = z.infer<typeof RegisterResponseSchema>;
-export type User = z.infer<typeof UserSchema>;
-
-// Auth service functions
 export const authService = {
-  login: async (username: string, password: string): Promise<{ accessToken: string; user: User }> => {
-    // Step 1: Login to get access token in cookie
-    await apiClient.post("/auth/login", {
-      username,
-      password,
-    });
-    
-    const accessToken = "cookie-auth";
-
-    // Step 2: Get user information using the token
-    const user = await userService.getCurrentUser();
-
-    return { accessToken, user };
+  // POST api/auth/login
+  login: async (payload: LoginPayload): Promise<AccountInfo> => {
+    await apiClient.post("/auth/login", payload);
+    return userService.getCurrentUser();
   },
 
-  register: async (
-    username: string,
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-  ): Promise<{ accessToken: string; user: User }> => {
-    // Step 1: Register the new user
-    await apiClient.post("/auth/register", {
-      username,
-      firstName,
-      lastName,
-      email,
-      password,
-    });
-
-    // Step 2: Login with the newly created credentials to get token
+  // POST api/auth/register
+  register: async (payload: RegisterPayload): Promise<AccountInfo> => {
+    await apiClient.post("/auth/register", payload);
     await apiClient.post("/auth/login", {
-      username,
-      password,
+      username: payload.username,
+      password: payload.password,
     });
-    const accessToken = "cookie-auth";
-
-    // Step 3: Get user information using the token
-    const user = await userService.getCurrentUser();
-
-    return { accessToken, user };
+    return userService.getCurrentUser();
   },
 
+  // POST api/auth/logout
   logout: async (): Promise<void> => {
     await apiClient.post("/auth/logout");
+  },
+
+  // PATCH api/auth/change-password
+  changePassword: async (payload: ChangePasswordPayload): Promise<string> => {
+    const res = await apiClient.patch<string>("/auth/change-password", payload);
+    return res.data;
   },
 };
