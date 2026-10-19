@@ -1,51 +1,25 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Community Types
+import type { components } from "./api.generated";
 import type { PagedResult } from "./pagination";
 
-export type CommunityType = "None" | "Public" | "Private";
-
-export type CommunityStatusType = "None" | "Active" | "Suspended" | "Inactive" | "Closed";
-
-export enum MemberType {
-  None = 0,
-  ClubOfficer = 1,
-  Student = 2,
-  ClubMember = 3,
-  StudentAffairsStaff = 4,
-}
+export type CommunityType = components["schemas"]["CommunityType"];
+export type CommunityStatusType = components["schemas"]["CommunityStatusType"];
+export type MemberType = components["schemas"]["MemberType"];
 
 export const MemberTypeLabels: Record<MemberType, string> = {
-  [MemberType.None]: "None",
-  [MemberType.ClubOfficer]: "Club Officer",
-  [MemberType.Student]: "Student",
-  [MemberType.ClubMember]: "Club Member",
-  [MemberType.StudentAffairsStaff]: "Student Affairs Staff",
+  None: "None",
+  ClubOfficer: "Club Officer",
+  Student: "Student",
+  ClubMember: "Club Member",
+  StudentAffairsStaff: "Student Affairs Staff",
 };
 
-export interface Community {
-  id: string;
-  communityName: string;
-  communityType: CommunityType;
-  createdBy: string;
-  status: CommunityStatusType;
-}
+export type Community = components["schemas"]["Community"] & { id: string };
+export type CommunityUserResponse = components["schemas"]["CommunityUserResponse"];
 
-export interface CommunityUserResponse {
-  userId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  profileImageUrl?: string | null;
-}
-
-export interface CommunityMemberResponse {
-  memberId: string;
-  communityId: string;
-  userId: string;
+export type CommunityMemberResponse = Omit<components["schemas"]["CommunityMemberResponse"], "memberType"> & {
   memberType: MemberType;
-  createdAt: string;
-  modifiedAt?: string | null;
-  user: CommunityUserResponse;
-}
+};
 
 export interface CommunityDetailResponse {
   communityId: string;
@@ -54,3 +28,5 @@ export interface CommunityDetailResponse {
   createdBy: string;
   communityMembers: PagedResult<CommunityMemberResponse>;
 }
+
+export type CreateCommunityRequest = components["schemas"]["CreateCommunityRequest"];

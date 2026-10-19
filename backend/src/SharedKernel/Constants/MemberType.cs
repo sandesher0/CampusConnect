@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace SharedKernel.Constants;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MemberType
 {
     None,
@@ -7,5 +10,4 @@ public enum MemberType
     Student,
     ClubMember,
     StudentAffairsStaff
-
 }
