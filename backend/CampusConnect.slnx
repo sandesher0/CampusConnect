@@ -12,4 +12,11 @@
     <Project Path="src/Modules/Resources/Resources.csproj" />
     <Project Path="src/Modules/Users/Users.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Application.Tests/Application.Tests.csproj" />
+    <Project Path="tests/Modules.Auth.Tests/Modules.Auth.Tests.csproj" />
+    <Project Path="tests/Modules.Communities.Tests/Modules.Communities.Tests.csproj" />
+    <Project Path="tests/Modules.Events.Tests/Modules.Events.Tests.csproj" />
+    <Project Path="tests/Modules.Users.Tests/Modules.Users.Tests.csproj" />
+  </Folder>
 </Solution>
