@@ -20,6 +20,8 @@ using Modules.Communities.Facades;
 using Modules.Events.Ports;
 using Modules.Events.Facades;
 using Communities.Ports;
+using FluentValidation;
+using Api.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +41,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add MVC services for controllers
-builder.Services.AddControllers();
+// Add MVC services for controllers with FluentValidation filter
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<FluentValidationActionFilter>();
+});
+
+// Register all FluentValidation validators from Api assembly
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.Configure<JwtOptions>(
        builder.Configuration.GetSection(JwtOptions.SectionName));
