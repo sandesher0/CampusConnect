@@ -1,34 +1,49 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: API Layer
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { toApiError } from "@/lib/apiError";
+import { useAuthStore } from "@/stores/authStore";
 
 const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
   withCredentials: true,
+  timeout: 15000, // 15s timeout for free-tier backend cold starts
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor for adding auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Let the page that initiated a request render an actionable error. Redirecting
-// here turns ordinary backend errors (including authorization failures) into a
-// full page reload and hides the server's response.
+// Retry GET requests once on network/5xx errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  async (error: AxiosError) => {
+    const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
+
+    // Retry once for idempotent GET requests on 5xx or network errors
+    if (config && config.method?.toLowerCase() === "get" && (!config._retryCount || config._retryCount < 1)) {
+      const status = error.response?.status;
+      if (!status || status >= 500) {
+        config._retryCount = (config._retryCount || 0) + 1;
+        return apiClient(config);
+      }
+    }
+
+    const apiError = toApiError(error);
+
+    // If 401 Unauthorized, clear auth store and redirect to login if on browser
+    if (apiError.status === 401) {
+      if (typeof window !== "undefined") {
+        const pathname = window.location.pathname;
+        useAuthStore.getState().setUser(null);
+
+        if (!pathname.startsWith("/login") && !pathname.startsWith("/register")) {
+          const redirectUrl = `/login?redirect=${encodeURIComponent(pathname + window.location.search)}`;
+          window.location.href = redirectUrl;
+        }
+      }
+    }
+
+    return Promise.reject(apiError);
+  }
 );
 
 export default apiClient;

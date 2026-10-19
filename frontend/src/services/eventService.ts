@@ -1,136 +1,58 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: API Layer
 import apiClient from "@/config/apiClient";
-import { z } from "zod";
+import type { PagedResult } from "@/types/pagination";
+import type {
+  EventSummaryResponse,
+  EventDetailResponse,
+  EventReservationSummaryResponse,
+  MyEventReservationResponse,
+  CreateEventRequest,
+} from "@/types/event";
 
-// Fields shared by the event list and detail responses.
-// Enums are serialized as strings via JsonStringEnumConverter
-// Dates are DateTimeOffset (ISO 8601 with offset)
-const EventBaseSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  location: z.string(),
-  eventDate: z.string(),
-  eventEndDate: z.string(),
-  visibility: z.union([z.string(), z.number()]).transform((v) => String(v)),
-  category: z.union([z.string(), z.number()]).transform((v) => String(v)),
-});
-
-// GET /api/event/all returns the lightweight event-card representation.
-export const EventSummarySchema = EventBaseSchema;
-export type EventSummary = z.infer<typeof EventSummarySchema>;
-
-const EventOrganizerSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  profileImageUrl: z.string().nullable(),
-});
-
-const EventOrganizerCommunitySchema = z.object({
-  communityId: z.string(),
-  communityName: z.string(),
-  communityType: z.union([z.string(), z.number()]).transform((v) => String(v)),
-});
-
-// GET /api/event/{eventId} returns the full event-detail representation.
-export const EventDetailSchema = EventBaseSchema.extend({
-  description: z.string(),
-  communityId: z.string(),
-  createdBy: z.string(),
-  organizer: EventOrganizerSchema,
-  organizerCommunity: EventOrganizerCommunitySchema,
-});
-export type EventDetail = z.infer<typeof EventDetailSchema>;
-
-// GET /api/event/reservation/{eventId} returns the event owner's attendee list.
-export const EventReservationSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  reservedAt: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string().email(),
-  profileImageUrl: z.string().nullable(),
-});
-export type EventReservation = z.infer<typeof EventReservationSchema>;
-
-// GET /api/event/reservations/mine returns the current user's reservations.
-export const MyEventReservationSchema = z.object({
-  reservationId: z.string(),
-  eventId: z.string(),
-  reservedAt: z.string(),
-  title: z.string(),
-  description: z.string(),
-  location: z.string(),
-  eventDate: z.string(),
-  eventEndDate: z.string(),
-  visibility: z.union([z.string(), z.number()]).transform((v) => String(v)),
-  category: z.union([z.string(), z.number()]).transform((v) => String(v)),
-  communityId: z.string(),
-});
-export type MyEventReservation = z.infer<typeof MyEventReservationSchema>;
-
-export type CreateEventPayload = {
-  title: string;
-  description: string;
-  location: string;
-  communityId: string;
-  eventDate: string;       // ISO DateTimeOffset
-  eventEndDate: string;    // ISO DateTimeOffset
-  visibility: "Public" | "Private";
-  category: "Academic" | "Social" | "Sports" | "Cultural" | "Career" | "Volunteering" | "Other";
-};
-
-import { createPagedResultSchema, PagedResult } from "@/types/pagination";
-
-// Service functions
 export const eventService = {
-  // GET /api/event/all — returns PagedResult<EventSummary> (public events only)
-  getEvents: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<EventSummary>> => {
-    const res = await apiClient.get("/event/all", { params });
-    return createPagedResultSchema(EventSummarySchema).parse(res.data);
+  // GET api/event/all — returns PagedResult<EventSummaryResponse>
+  getEvents: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<EventSummaryResponse>> => {
+    const res = await apiClient.get<PagedResult<EventSummaryResponse>>("/event/all", { params });
+    return res.data;
   },
 
-  // GET /api/event/{eventId} — returns one EventDetailResponse
-  getEventById: async (id: string): Promise<EventDetail> => {
-    const res = await apiClient.get(`/event/${id}`);
-    return EventDetailSchema.parse(res.data);
+  // GET api/event/{eventId} — returns EventDetailResponse
+  getEventById: async (id: string): Promise<EventDetailResponse> => {
+    const res = await apiClient.get<EventDetailResponse>(`/event/${id}`);
+    return res.data;
   },
 
-  // GET /api/event/reservation/{eventId} — returns PagedResult<EventReservation>
-  getEventReservations: async (id: string, params?: { page?: number; pageSize?: number }): Promise<PagedResult<EventReservation>> => {
-    const res = await apiClient.get(`/event/reservation/${id}`, { params });
-    return createPagedResultSchema(EventReservationSchema).parse(res.data);
+  // GET api/event/reservation/{eventId} — returns PagedResult<EventReservationSummaryResponse>
+  getEventReservations: async (
+    id: string,
+    params?: { page?: number; pageSize?: number }
+  ): Promise<PagedResult<EventReservationSummaryResponse>> => {
+    const res = await apiClient.get<PagedResult<EventReservationSummaryResponse>>(`/event/reservation/${id}`, { params });
+    return res.data;
   },
 
-  // GET /api/event/reservations/mine — returns PagedResult<MyEventReservation>
-  getMyReservations: async (params?: { page?: number; pageSize?: number }): Promise<PagedResult<MyEventReservation>> => {
-    const res = await apiClient.get("/event/reservations/mine", { params });
-    return createPagedResultSchema(MyEventReservationSchema).parse(res.data);
+  // GET api/event/reservations/mine — returns PagedResult<MyEventReservationResponse>
+  getMyReservations: async (
+    params?: { page?: number; pageSize?: number }
+  ): Promise<PagedResult<MyEventReservationResponse>> => {
+    const res = await apiClient.get<PagedResult<MyEventReservationResponse>>("/event/reservations/mine", { params });
+    return res.data;
   },
 
-  // DELETE /api/event/reservation/{eventId} — cancel a reservation
+  // DELETE api/event/reservation/{eventId} — cancel a reservation
   cancelReservation: async (eventId: string): Promise<void> => {
     await apiClient.delete(`/event/reservation/${eventId}`);
   },
 
-  // POST /api/event/create
-  createEvent: async (data: CreateEventPayload): Promise<void> => {
+  // POST api/event/create
+  createEvent: async (data: CreateEventRequest): Promise<void> => {
     await apiClient.post("/event/create", data);
   },
 
-  // POST /api/event/join?communityId={communityId}&eventId={eventId}
+  // POST api/event/join?communityId={communityId}&eventId={eventId}
   joinEvent: async (eventId: string, communityId: string): Promise<void> => {
     await apiClient.post("/event/join", undefined, {
       params: { eventId, communityId },
     });
-  },
-
-  updateEvent: async (id: string, data: Partial<EventDetail>): Promise<void> => {
-    await apiClient.patch(`/event/${id}`, data);
-  },
-
-  deleteEvent: async (id: string): Promise<void> => {
-    await apiClient.delete(`/event/${id}`);
   },
 };

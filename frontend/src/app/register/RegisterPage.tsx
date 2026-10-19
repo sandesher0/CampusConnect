@@ -10,6 +10,8 @@ import { authService } from "@/services/authService";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { handleServerValidationErrors } from "@/utils/formErrors";
+import Button from "@/components/common/Button";
 
 export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +22,8 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting: isFormSubmitting },
+    setError: setFieldError,
+    formState: { errors },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -29,6 +32,7 @@ export default function RegisterPage() {
       lastName: "",
       email: "",
       password: "",
+      phoneNumber: "",
     },
   });
 
@@ -38,17 +42,21 @@ export default function RegisterPage() {
     setStoreLoading(true);
 
     try {
-      const { accessToken, user } = await authService.register(
-        data.username,
-        data.firstName,
-        data.lastName,
-        data.email,
-        data.password
-      );
-      storeLogin(accessToken, user);
+      const user = await authService.register({
+        username: data.username,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phoneNumber ? data.phoneNumber : null,
+      });
+      storeLogin(user);
       router.push("/");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Registration failed. Please try again."));
+      const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
+      if (!hasFieldErrors) {
+        setError(getApiErrorMessage(err, "Registration failed. Please try again."));
+      }
     } finally {
       setIsSubmitting(false);
       setStoreLoading(false);
@@ -56,152 +64,179 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12">
       <div className="w-full max-w-md space-y-6 p-4">
         <div className="space-y-4 text-center">
           <h2 className="text-2xl font-bold text-gray-900">
-            Join CampusConnect
+            Create an Account
           </h2>
           <p className="text-gray-600">
-            Create your account to connect with campus life
+            Join the CampusConnect community
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4">
-            <p>{error}</p>
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
+            {error}
           </div>
         )}
 
-        <div className="bg-white px-8 py-10 shadow-sm sm:rounded-lg sm:border sm:border-gray-200">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700"
+            >
               Username
             </label>
             <input
               id="username"
               type="text"
               {...register("username")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                errors.username ? "border-red-600" : ""
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.username ? "border-red-500" : ""
               }`}
-              placeholder="Enter your username"
             />
             {errors.username && (
-              <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.username.message}
+              </p>
             )}
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register("email")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                errors.email ? "border-red-600" : ""
-              }`}
-              placeholder="you@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="firstName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 First Name
               </label>
               <input
                 id="firstName"
                 type="text"
                 {...register("firstName")}
-                className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                  errors.firstName ? "border-red-600" : ""
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                  errors.firstName ? "border-red-500" : ""
                 }`}
-                placeholder="Enter your first name"
               />
               {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.firstName.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Last Name
               </label>
               <input
                 id="lastName"
                 type="text"
                 {...register("lastName")}
-                className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                  errors.lastName ? "border-red-600" : ""
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                  errors.lastName ? "border-red-500" : ""
                 }`}
-                placeholder="Enter your last name"
               />
               {errors.lastName && (
-                <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.lastName.message}
+                </p>
               )}
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              {...register("email")}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.email ? "border-red-500" : ""
+              }`}
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="phoneNumber"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Phone Number (Optional)
+            </label>
+            <input
+              id="phoneNumber"
+              type="tel"
+              {...register("phoneNumber")}
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.phoneNumber ? "border-red-500" : ""
+              }`}
+            />
+            {errors.phoneNumber && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.phoneNumber.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
               id="password"
               type="password"
               {...register("password")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                errors.password ? "border-red-600" : ""
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.password ? "border-red-500" : ""
               }`}
-              placeholder="••••••••"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.password.message}
+              </p>
             )}
+            <p className="mt-1 text-xs text-gray-500">
+              Must be at least 8 characters with uppercase, lowercase, number, and special character.
+            </p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input id="newsletter" type="checkbox" className="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded" />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="newsletter" className="text-gray-500">
-                  Subscribe to newsletter
-                </label>
-              </div>
-            </div>
-          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating account..." : "Register"}
+          </Button>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isFormSubmitting || isSubmitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 ${
-                isFormSubmitting || isSubmitting ? "cursor-not-allowed" : ""
-              }`}
+          <div className="text-center text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
-              {isSubmitting ? "Creating account..." : "Sign up"}
-            </button>
+              Sign in here
+            </Link>
           </div>
         </form>
-        </div>
-
-        <div className="text-center text-sm">
-          <p className="text-gray-500">
-            Already have an account?
-            <a href="/login" className="font-medium text-gray-900 hover:text-gray-600">
-              Sign in
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export type Resource = z.infer<typeof ResourceSchema>;
 
 // Service functions
 export const resourceService = {
-  getResources: async (filters?: Record<string, any>): Promise<Resource[]> => {
+  getResources: async (filters?: Record<string, unknown>): Promise<Resource[]> => {
     const res = await apiClient.get("/resources", { params: filters });
     return z.array(ResourceSchema).parse(res.data);
   },

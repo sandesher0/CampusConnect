@@ -1,27 +1,39 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Auth Flow
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginValues } from "@/validations/auth";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/services/authService";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/common/Button";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { handleServerValidationErrors } from "@/utils/formErrors";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">Loading...</div>}>
+      <LoginPageInner />
+    </Suspense>
+  );
+}
+
+function LoginPageInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login: storeLogin, setLoading: setStoreLoading } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/";
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting: isFormSubmitting },
+    setError: setFieldError,
+    formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,11 +48,14 @@ export default function LoginPage() {
     setStoreLoading(true);
 
     try {
-      const { accessToken, user } = await authService.login(data.username, data.password);
-      storeLogin(accessToken, user);
-      router.push("/");
+      const user = await authService.login(data);
+      storeLogin(user);
+      router.push(redirect);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Login failed. Please try again."));
+      const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
+      if (!hasFieldErrors) {
+        setError(getApiErrorMessage(err, "Login failed. Please check your credentials."));
+      }
     } finally {
       setIsSubmitting(false);
       setStoreLoading(false);
@@ -60,90 +75,74 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4">
-            <p>{error}</p>
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
+            {error}
           </div>
         )}
 
-        <div className="bg-white px-8 py-10 shadow-sm sm:rounded-lg sm:border sm:border-gray-200">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-700"
+            >
               Username
             </label>
             <input
               id="username"
               type="text"
               {...register("username")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                errors.username ? "border-red-600" : ""
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.username ? "border-red-500" : ""
               }`}
-              placeholder="Enter your username"
             />
             {errors.username && (
-              <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.username.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
               id="password"
               type="password"
               {...register("password")}
-              className={`block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 ${
-                errors.password ? "border-red-600" : ""
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
+                errors.password ? "border-red-500" : ""
               }`}
-              placeholder="••••••••"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input id="remember-me" type="checkbox" className="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded" />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="remember-me" className="text-gray-500">
-                  Remember me
-                </label>
-              </div>
-            </div>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Sign In"}
+          </Button>
 
-            <div className="text-sm">
-              <a href="#" className="font-medium text-gray-900 hover:text-gray-600">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isFormSubmitting || isSubmitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 ${
-                isFormSubmitting || isSubmitting ? "cursor-not-allowed" : ""
-              }`}
+          <div className="text-center text-sm text-gray-600">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
-            </button>
+              Register here
+            </Link>
           </div>
         </form>
-        </div>
-
-        <div className="text-center text-sm">
-          <p className="text-gray-500">
-            Don’t have an account?
-            <a href="/register" className="font-medium text-gray-900 hover:text-gray-600">
-              Sign up
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );

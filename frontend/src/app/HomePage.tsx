@@ -29,7 +29,7 @@ export default function Home() {
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900">Events</h2>
             <p className="mt-4 text-base text-gray-600">
-              Discover what's happening on campus. Filter by academic, social, or sports categories to find events that match your interests.
+              Discover what&apos;s happening on campus. Filter by academic, social, or sports categories to find events that match your interests.
             </p>
             <Link href="/events" className="mt-6 inline-block text-sm font-semibold text-gray-900 hover:underline">
               View all events

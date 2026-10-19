@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   async rewrites() {
     // 1. Get the raw variable
-    let rawUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5252";
+    const rawUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5252";
     
     // 2. Strip out any accidental spaces or quotation marks
     let cleanUrl = rawUrl.trim().replace(/['"]+/g, '');
