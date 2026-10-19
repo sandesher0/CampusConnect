@@ -1,3 +1,4 @@
+using Api.Requests;
 using Application.Ports;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,16 +11,20 @@ public class JoinPublicCommunityController : ControllerBase
 {
     [HttpPost("{communityId:guid}/join")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> HandleAsync(Guid communityId, [FromServices] IJoinPublicCommunityUseCase joinPublicCommunityUseCase, CancellationToken cancellationToken)
+    public async Task<IActionResult> HandleAsync(
+        [FromRoute] JoinPublicCommunityRequest request,
+        [FromServices] IJoinPublicCommunityUseCase joinPublicCommunityUseCase,
+        CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var accountId))
         {
             throw new UnauthorizedAccessException();
         }
-        await joinPublicCommunityUseCase.HandleAsync(accountId, communityId, cancellationToken);
+        await joinPublicCommunityUseCase.HandleAsync(accountId, request.CommunityId, cancellationToken);
         return Ok();
     }
 }

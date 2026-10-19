@@ -1,3 +1,4 @@
+using Api.Requests;
 using Communities.Ports;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -14,16 +15,17 @@ public class GetCommunityById : ControllerBase
     [Authorize]
     [HttpGet("{communityId:guid}")]
     [ProducesResponseType(typeof(CommunityDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CommunityDetailResponse>> HandleAsync(
-        Guid communityId,
+        [FromRoute] GetCommunityRequest request,
         [FromServices] IGetCommunityFacade getCommunityFacade,
         [FromQuery] PageRequest page,
         CancellationToken cancellationToken)
     {
         var response = await getCommunityFacade.HandleAsync(
-            communityId,
+            request.CommunityId,
             page,
             cancellationToken);
 

@@ -1,4 +1,6 @@
+using Api.Requests;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Modules.Auth.Ports;
 using Modules.Events.Ports;
@@ -14,13 +16,14 @@ public class GetEventReservationDetailsController : ControllerBase
     [Authorize]
     [HttpGet("reservation/{eventId:guid}")]
     [ProducesResponseType(typeof(PagedResult<EventReservationSummaryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PagedResult<EventReservationSummaryResponse>>> HandleAsync(
         [FromServices] IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade,
         [FromServices] IGetEventReservationDetailsFacade getEventReservationDetailsFacade,
-        Guid eventId,
+        [FromRoute] GetEventReservationDetailsRequest request,
         [FromQuery] PageRequest page,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public class GetEventReservationDetailsController : ControllerBase
         var userId = await getUserIdByAccountIdFacade.HandleAsync(accountId, cancellationToken)
             ?? throw new AccountNotFoundException(accountId);
 
-        var reservations = await getEventReservationDetailsFacade.HandleAsync(userId, eventId, page, cancellationToken);
+        var reservations = await getEventReservationDetailsFacade.HandleAsync(userId, request.EventId, page, cancellationToken);
 
         return Ok(reservations);
     }
