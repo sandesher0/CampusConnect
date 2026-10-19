@@ -20,6 +20,7 @@ public class EventController : ControllerBase
     [Authorize]
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> HandleAsync(EventRequest request, CancellationToken cancellationToken)
     {

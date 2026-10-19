@@ -27,6 +27,7 @@ public class CreateCommunityController : ControllerBase
     [Authorize]
     [HttpPost("create")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> HandleAsync(CreateCommunityRequest request, CancellationToken cancellationToken)
