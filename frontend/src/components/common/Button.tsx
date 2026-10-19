@@ -1,10 +1,11 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: UI Components
-import { ReactNode } from "react";
+import React, { ReactNode, forwardRef } from "react";
+import Link from "next/link";
 
-interface ButtonProps {
+export interface ButtonProps {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
-  size?: "sm" | "md" | "lg" | "xl";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "tint";
+  size?: "sm" | "md" | "lg" | "xl" | "hero";
   className?: string;
   asChild?: boolean;
   disabled?: boolean;
@@ -12,63 +13,109 @@ interface ButtonProps {
   loading?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
-  onClick?: () => void;
+  href?: string;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
 }
 
-export default function Button({
-  children,
-  variant = "primary",
-  size = "md",
-  className = "",
-  asChild = false,
-  disabled = false,
-  type = "button",
-  loading = false,
-  leftIcon,
-  rightIcon,
-}: ButtonProps) {
-  // Base classes
-  const baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-nowait gap-x-2";
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      className = "",
+      asChild = false,
+      disabled = false,
+      type = "button",
+      loading = false,
+      leftIcon,
+      rightIcon,
+      href,
+      onClick,
+    },
+    ref
+  ) => {
+    // Base classes: pill shape, weight 700, smooth hover lift, accessible focus outline
+    const baseClasses =
+      "inline-flex items-center justify-center rounded-full font-bold transition-all duration-200 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none gap-x-2 shrink-0 active:scale-[0.98]";
 
-  // Variant classes
-  const variantClasses = {
-    primary: "bg-gray-900 text-white shadow-sm hover:bg-gray-800 focus:ring-gray-900",
-    secondary: "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 focus:ring-gray-300",
-    outline: "border border-gray-200 bg-white shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:ring-gray-300",
-    ghost: "hover:bg-gray-50 hover:text-gray-900 focus:ring-gray-300",
-    destructive: "bg-red-600 text-white shadow-sm hover:bg-red-700 focus:ring-red-500",
-  };
+    // Variant classes according to playful polish spec mapped to tokens
+    const variantClasses: Record<string, string> = {
+      primary:
+        "bg-primary text-white shadow-[0_6px_18px_rgba(109,74,255,0.28)] hover:bg-primary-hover hover:shadow-[0_10px_24px_rgba(109,74,255,0.35)] hover:-translate-y-[2px]",
+      outline:
+        "border border-border-btn bg-surface text-ink hover:bg-primary-tint hover:border-border-card-hover hover:-translate-y-[1px]",
+      tint:
+        "bg-primary-tint text-primary-on-tint hover:bg-primary-tint-hover hover:-translate-y-[1px]",
+      secondary:
+        "bg-primary-tint text-primary-on-tint hover:bg-primary-tint-hover hover:-translate-y-[1px]",
+      ghost:
+        "text-nav hover:bg-primary-tint hover:text-primary-on-tint",
+      destructive:
+        "bg-coral text-white shadow-sm hover:bg-coral-hover hover:-translate-y-[1px]",
+    };
 
-  // Size classes
-  const sizeClasses = {
-    sm: "h-9 px-3 text-xs",
-    md: "h-10 px-4 text-sm",
-    lg: "h-11 px-8 text-base",
-    xl: "h-12 px-10 text-lg",
-  };
+    // Size classes: min-height 44px (52px hero size)
+    const sizeClasses: Record<string, string> = {
+      sm: "min-h-[38px] px-4 text-xs tracking-tight",
+      md: "min-h-[44px] px-5 text-sm",
+      lg: "min-h-[48px] px-7 text-base",
+      xl: "min-h-[52px] px-8 text-base",
+      hero: "min-h-[52px] px-8 text-base md:text-lg",
+    };
 
-  const Component = asChild ? "span" : "button";
+    const content = (
+      <>
+        {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+        {loading ? (
+          <span className="inline-flex items-center justify-center w-4 h-4 animate-spin" aria-hidden="true">
+            <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+            </svg>
+          </span>
+        ) : (
+          <span>{children}</span>
+        )}
+        {rightIcon && <span className="shrink-0">{rightIcon}</span>}
+      </>
+    );
 
-  return (
-    <Component
-      type={type}
-      disabled={disabled || loading}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-    >
-      {leftIcon && <span className="shrink-0">{leftIcon}</span>}
-      {loading ? (
-        <span className="inline-flex items-center justify-center w-4 h-4 animate-spin">
-          {/* Simple loading spinner */}
-          <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l4 2-4 4V8z" />
-          </svg>
+    if (href && !disabled && !loading) {
+      return (
+        <Link
+          href={href}
+          className={`${baseClasses} ${variantClasses[variant] ?? variantClasses.primary} ${sizeClasses[size] ?? sizeClasses.md} ${className}`}
+          onClick={onClick}
+        >
+          {content}
+        </Link>
+      );
+    }
+
+    if (asChild) {
+      return (
+        <span
+          className={`${baseClasses} ${variantClasses[variant] ?? variantClasses.primary} ${sizeClasses[size] ?? sizeClasses.md} ${className}`}
+          onClick={onClick}
+        >
+          {content}
         </span>
-      ) : (
-        <>
-          {children}
-          {rightIcon && <span className="shrink-0">{rightIcon}</span>}
-        </>
-      )}
-    </Component>
-  );
-}
+      );
+    }
+
+    return (
+      <button
+        ref={ref}
+        type={type}
+        disabled={disabled || loading}
+        className={`${baseClasses} ${variantClasses[variant] ?? variantClasses.primary} ${sizeClasses[size] ?? sizeClasses.md} ${className}`}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+);
+
+Button.displayName = "Button";
+export default Button;

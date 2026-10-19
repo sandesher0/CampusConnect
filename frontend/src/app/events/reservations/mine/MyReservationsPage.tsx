@@ -1,47 +1,58 @@
-// Ref: workflow.md §4 Architecture Patterns | Feature: Events
+// Ref: workflow.md §4 Architecture Patterns | Feature: My Reservations
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
-import { getApiErrorMessage } from "@/lib/apiError";
-import Pagination from "@/components/common/Pagination";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
-import Button from "@/components/common/Button";
 import { useAuthStore } from "@/stores/authStore";
+import PageHeader from "@/components/common/PageHeader";
+import Card from "@/components/common/Card";
+import CategoryChip from "@/components/common/CategoryChip";
+import StatusDot from "@/components/common/StatusDot";
+import Skeleton from "@/components/common/Skeleton";
+import EmptyState from "@/components/common/EmptyState";
+import ErrorState from "@/components/common/ErrorState";
+import Pagination from "@/components/common/Pagination";
+import Button from "@/components/common/Button";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import Toast from "@/components/common/Toast";
+import { getApiErrorMessage } from "@/lib/apiError";
 import type { MyEventReservationResponse } from "@/types/event";
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Academic: "bg-blue-50 text-blue-700",
-  Social: "bg-purple-50 text-purple-700",
-  Sports: "bg-green-50 text-green-700",
-  Cultural: "bg-yellow-50 text-yellow-700",
-  Career: "bg-orange-50 text-orange-700",
-  Volunteering: "bg-teal-50 text-teal-700",
-  Other: "bg-gray-100 text-gray-600",
-};
 
 export default function MyReservationsPage() {
   return (
-    <Suspense fallback={<div className="min-h-[calc(100vh-160px)] flex items-center justify-center text-gray-500">Loading reservations...</div>}>
-      <MyReservationsPageInner />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 space-y-6">
+          <Skeleton className="h-10 w-48 mb-8" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 w-full" />
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <MyReservationsContent />
     </Suspense>
   );
 }
 
-function MyReservationsPageInner() {
+function MyReservationsContent() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [cancellingEventId, setCancellingEventId] = useState<string | null>(null);
-  const [cancellingEventTitle, setCancellingEventTitle] = useState<string | null>(null);
-  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [cancellingEvent, setCancellingEvent] = useState<{ id: string; title: string } | null>(null);
+  const cancelBtnRef = useRef<HTMLButtonElement>(null);
 
   const {
     items: reservations,
-    page,
     totalPages,
+    page,
     setPage,
     status,
     isFetching,
@@ -49,7 +60,7 @@ function MyReservationsPageInner() {
     refetch,
   } = usePaginatedQuery<MyEventReservationResponse>({
     queryKeyPrefix: queryKeys.events.myReservations(),
-    queryFn: (params) => eventService.getMyReservations(params),
+    queryFn: eventService.getMyReservations,
     defaultPageSize: 10,
     enabled: Boolean(user),
   });
@@ -57,170 +68,179 @@ function MyReservationsPageInner() {
   const cancelMutation = useMutation({
     mutationFn: (eventId: string) => eventService.cancelReservation(eventId),
     onSuccess: async () => {
-      setCancellingEventId(null);
-      setCancellingEventTitle(null);
+      setToast({ message: "Reservation cancelled successfully.", type: "success" });
+      setCancellingEvent(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.events.myReservations() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.events.all() }),
       ]);
     },
     onError: (err) => {
-      setCancelError(getApiErrorMessage(err, "Failed to cancel reservation. Please try again."));
+      setToast({ message: getApiErrorMessage(err, "Failed to cancel reservation."), type: "error" });
     },
   });
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
-        <p className="text-gray-500 mb-4">Please sign in to view your reservations.</p>
-        <Link href="/login">
-          <Button variant="primary">Sign In</Button>
-        </Link>
+      <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8">
+        <EmptyState
+          title="Sign in to view your reservations"
+          description="Track upcoming events you've RSVP'd to and manage your campus schedule."
+          action={
+            <Button href="/login?redirect=/events/reservations/mine" variant="primary">
+              Log in to your account
+            </Button>
+          }
+        />
       </div>
     );
   }
 
+  const now = new Date();
+
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <Link href="/events" className="hover:text-gray-900">Events</Link>
-            <span>/</span>
-            <span className="text-gray-900 font-medium">My Reservations</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">My Event Reservations</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            View and manage your upcoming registered campus events
-          </p>
+    <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+
+      <PageHeader
+        eyebrow="SCHEDULE"
+        title="My Reservations"
+        description="Upcoming events and sessions you have registered for."
+        action={
+          <Button href="/events" variant="outline">
+            Browse More Events
+          </Button>
+        }
+      />
+
+      {status === "pending" && (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-6 space-y-3" hoverEffect={false}>
+              <div className="flex justify-between">
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+            </Card>
+          ))}
         </div>
+      )}
 
-        {cancelError && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-md text-sm" role="alert">
-            {cancelError}
-          </div>
-        )}
+      {status === "error" && (
+        <ErrorState
+          error={error}
+          onRetry={() => void refetch()}
+          fallbackMessage="Unable to load your event reservations."
+        />
+      )}
 
-        {/* Confirmation Modal */}
-        {cancellingEventId && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-sm w-full p-6 space-y-4 shadow-xl">
-              <h3 className="font-semibold text-gray-900 text-lg">Cancel Reservation?</h3>
-              <p className="text-sm text-gray-600">
-                Are you sure you want to cancel your reservation for <strong>{cancellingEventTitle}</strong>?
-              </p>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setCancellingEventId(null);
-                    setCancellingEventTitle(null);
-                  }}
-                >
-                  Keep Reservation
-                </Button>
-                <Button
-                  variant="primary"
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  disabled={cancelMutation.isPending}
-                  onClick={() => cancelMutation.mutate(cancellingEventId)}
-                >
-                  {cancelMutation.isPending ? "Cancelling..." : "Confirm Cancel"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="p-12 text-center bg-white border border-gray-200 rounded-lg">
-            <p className="text-gray-600 mb-4">{getApiErrorMessage(error, "Failed to load reservations.")}</p>
-            <Button variant="outline" onClick={() => void refetch()}>
-              Retry
+      {status === "success" && reservations.length === 0 && (
+        <EmptyState
+          title="No reservations yet"
+          description="You haven't RSVP'd to any campus events yet. Explore upcoming gatherings and claim a spot!"
+          action={
+            <Button href="/events" variant="primary">
+              Browse Events
             </Button>
-          </div>
-        )}
+          }
+        />
+      )}
 
-        {status === "pending" && (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse space-y-2">
-                <div className="h-5 bg-gray-200 rounded w-1/3" />
-                <div className="h-4 bg-gray-100 rounded w-1/4" />
-              </div>
-            ))}
-          </div>
-        )}
+      {status === "success" && reservations.length > 0 && (
+        <div className="space-y-4">
+          {reservations.map((res) => {
+            const isHappeningNow =
+              new Date(res.eventDate) <= now && new Date(res.eventEndDate) >= now;
 
-        {status === "success" && reservations.length === 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <h3 className="text-base font-semibold text-gray-900">No active reservations</h3>
-            <p className="mt-1 text-sm text-gray-500">You have not registered for any upcoming events.</p>
-            <Link href="/events" className="mt-6 inline-block">
-              <Button variant="primary">Browse Events</Button>
-            </Link>
-          </div>
-        )}
-
-        {status === "success" && reservations.length > 0 && (
-          <>
-            <div className="space-y-4">
-              {reservations.map((reservation) => (
-                <div
-                  key={reservation.reservationId}
-                  className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${CATEGORY_COLORS[reservation.category] ?? "bg-gray-100 text-gray-600"}`}>
-                        {reservation.category}
+            return (
+              <Card
+                key={res.reservationId}
+                className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
+              >
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <CategoryChip category={res.category} />
+                    {isHappeningNow ? (
+                      <StatusDot status="good" label="Happening now" pulse />
+                    ) : (
+                      <span className="text-xs font-semibold text-muted">
+                        Reserved on {new Date(res.reservedAt).toLocaleDateString()}
                       </span>
-                      <span className="text-xs text-gray-400">
-                        Reserved {new Date(reservation.reservedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/events/${reservation.eventId}`}
-                      className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                    >
-                      {reservation.title}
-                    </Link>
-                    <p className="text-xs text-gray-500">
-                      📍 {reservation.location} • 📅 {new Date(reservation.eventDate).toLocaleDateString()} at {new Date(reservation.eventDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <Link href={`/events/${reservation.eventId}`}>
-                      <Button variant="outline" size="sm">
-                        View Event
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => {
-                        setCancellingEventId(reservation.eventId);
-                        setCancellingEventTitle(reservation.title);
-                      }}
-                    >
-                      Cancel
-                    </Button>
+                  <Link href={`/events/${res.eventId}`} className="group block focus-visible:outline-none">
+                    <h3 className="text-xl font-[800] text-ink group-hover:text-primary transition-colors">
+                      {res.title}
+                    </h3>
+                  </Link>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-muted">
+                    <span>
+                      📅{" "}
+                      {new Date(res.eventDate).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}{" "}
+                      at {new Date(res.eventDate).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                    <span>📍 {res.location}</span>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              isLoading={isFetching}
-            />
-          </>
-        )}
-      </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Button href={`/events/${res.eventId}`} variant="outline" size="sm">
+                    View
+                  </Button>
+                  <Button
+                    ref={cancelBtnRef}
+                    variant="outline"
+                    size="sm"
+                    className="text-status-warning-text hover:bg-coral-tint hover:border-coral-border"
+                    onClick={() => setCancellingEvent({ id: res.eventId, title: res.title })}
+                  >
+                    Cancel Spot
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </div>
+      )}
+
+      {/* Accessible Cancel Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(cancellingEvent)}
+        onClose={() => setCancellingEvent(null)}
+        onConfirm={() => {
+          if (cancellingEvent) {
+            cancelMutation.mutate(cancellingEvent.id);
+          }
+        }}
+        title="Cancel Reservation?"
+        description={`Are you sure you want to cancel your spot for "${cancellingEvent?.title}"?`}
+        confirmLabel="Confirm Cancel"
+        cancelLabel="Keep Reservation"
+        isDestructive={true}
+        isLoading={cancelMutation.isPending}
+        triggerRef={cancelBtnRef}
+      />
     </div>
   );
 }
