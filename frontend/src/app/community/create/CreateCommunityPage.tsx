@@ -9,7 +9,12 @@ import Link from "next/link";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
+import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
+import Field from "@/components/common/Field";
+import Input from "@/components/common/Input";
+import Select from "@/components/common/Select";
+import Toast from "@/components/common/Toast";
 import { getApiErrorMessage } from "@/lib/apiError";
 import { handleServerValidationErrors } from "@/utils/formErrors";
 import { createCommunitySchema, type CreateCommunityValues } from "@/validations/community";
@@ -18,13 +23,13 @@ export default function CreateCommunityPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const {
     register,
     handleSubmit,
-    watch,
     setError: setFieldError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateCommunityValues>({
     resolver: zodResolver(createCommunitySchema),
     defaultValues: {
@@ -33,16 +38,16 @@ export default function CreateCommunityPage() {
     },
   });
 
-  const selectedType = watch("communityType");
-
   const mutation = useMutation({
-    mutationFn: (data: CreateCommunityValues) =>
-      communityService.createCommunity(data),
+    mutationFn: (data: CreateCommunityValues) => communityService.createCommunity(data),
     onSuccess: async () => {
+      setToast({ message: "Community created successfully!", type: "success" });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.communities.all() }),
       ]);
-      router.push("/community");
+      setTimeout(() => {
+        router.push("/community");
+      }, 1000);
     },
     onError: (err) => {
       const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
@@ -58,124 +63,95 @@ export default function CreateCommunityPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link
-            href="/community"
-            className="text-sm text-gray-500 hover:text-gray-900 inline-flex items-center gap-1"
-          >
-            ← Back to Communities
-          </Link>
-        </div>
+    <div className="mx-auto max-w-xl px-6 py-12 sm:px-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Create a Community</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Start a new group for students with shared interests.
-          </p>
-        </div>
-
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          {serverError && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
-              {serverError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label
-                htmlFor="communityName"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
-                Community name <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="communityName"
-                type="text"
-                {...register("communityName")}
-                placeholder="e.g. Photography Club, Debate Society"
-                className={`block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-900 sm:text-sm sm:leading-6 shadow-sm ${
-                  errors.communityName
-                    ? "ring-red-400 focus:ring-red-500"
-                    : "ring-gray-300"
-                }`}
-              />
-              {errors.communityName && (
-                <p className="mt-1.5 text-sm text-red-600">
-                  {errors.communityName.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Visibility <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label
-                  className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${
-                    selectedType === "Public"
-                      ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    value="Public"
-                    {...register("communityType")}
-                    className="sr-only"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-gray-900">Public</span>
-                    <p className="text-xs text-gray-500">Anyone can see and join</p>
-                  </div>
-                </label>
-
-                <label
-                  className={`relative flex cursor-pointer rounded-lg border p-4 shadow-sm transition-all ${
-                    selectedType === "Private"
-                      ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    value="Private"
-                    {...register("communityType")}
-                    className="sr-only"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-gray-900">Private</span>
-                    <p className="text-xs text-gray-500">Invite-only membership</p>
-                  </div>
-                </label>
-              </div>
-              {errors.communityType && (
-                <p className="mt-1.5 text-sm text-red-600">
-                  {errors.communityType.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <Link href="/community">
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </Link>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isSubmitting || mutation.isPending}
-              >
-                {mutation.isPending ? "Creating..." : "Create Community"}
-              </Button>
-            </div>
-          </form>
-        </div>
+      {/* Back button */}
+      <div className="mb-6">
+        <Link
+          href="/community"
+          className="text-sm font-bold text-muted hover:text-primary inline-flex items-center gap-1.5 transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back to Communities
+        </Link>
       </div>
+
+      {/* Header */}
+      <div className="mb-8">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-primary mb-1">NEW ORGANIZATION</p>
+        <h1 className="text-3xl font-[800] tracking-[-0.035em] text-ink">Start a Community</h1>
+        <p className="mt-1 text-sm text-muted">
+          Create an organization for students to join, participate in discussions, and organize events.
+        </p>
+      </div>
+
+      <Card className="p-6 sm:p-10" hoverEffect={false}>
+        {serverError && (
+          <div
+            className="mb-6 rounded-[14px] bg-coral-tint border border-coral-border p-4 text-sm font-semibold text-status-warning-text flex items-center gap-2.5"
+            role="alert"
+          >
+            <svg className="w-5 h-5 shrink-0 text-status-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{serverError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          {/* Community Name */}
+          <Field id="communityName" label="Community Name" required error={errors.communityName?.message}>
+            <Input
+              id="communityName"
+              type="text"
+              placeholder="e.g. Computer Science Society"
+              hasError={Boolean(errors.communityName)}
+              {...register("communityName")}
+            />
+          </Field>
+
+          {/* Community Type */}
+          <Field
+            id="communityType"
+            label="Community Type"
+            required
+            hint="Public communities allow any enrolled student to join immediately."
+            error={errors.communityType?.message}
+          >
+            <Select id="communityType" hasError={Boolean(errors.communityType)} {...register("communityType")}>
+              <option value="Public">Public (open to all students)</option>
+              <option value="Private">Private (restricted membership)</option>
+            </Select>
+          </Field>
+
+          {/* Buttons */}
+          <div className="pt-4 border-t border-border-divider flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+            <Button href="/community" variant="outline" className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full sm:w-auto"
+              loading={mutation.isPending}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "Creating..." : "Create Community"}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

@@ -10,7 +10,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventService } from "@/services/eventService";
 import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
+import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
+import Field from "@/components/common/Field";
+import Input from "@/components/common/Input";
+import Select from "@/components/common/Select";
+import Textarea from "@/components/common/Textarea";
+import Toast from "@/components/common/Toast";
+import Skeleton from "@/components/common/Skeleton";
 import { getApiErrorMessage } from "@/lib/apiError";
 import { handleServerValidationErrors } from "@/utils/formErrors";
 import { createEventSchema, type CreateEventValues } from "@/validations/event";
@@ -28,22 +35,30 @@ const EVENT_CATEGORIES = [
 
 export default function CreateEventPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-gray-500">Loading...</div>}>
-      <CreateEventPageInner />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-2xl px-6 py-12 sm:px-8">
+          <Skeleton className="h-10 w-48 mb-6" />
+          <Skeleton className="h-96 w-full rounded-[24px]" />
+        </div>
+      }
+    >
+      <CreateEventPageContent />
     </Suspense>
   );
 }
 
-function CreateEventPageInner() {
+function CreateEventPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedCommunityId = searchParams.get("communityId") ?? "";
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Fetch communities user belongs to so they can select where to host the event
-  const { data: myCommunitiesData } = useQuery({
+  const { data: myCommunitiesData, isLoading: isLoadingCommunities } = useQuery({
     queryKey: queryKeys.communities.mine({ page: 1, pageSize: 50 }),
     queryFn: () => communityService.getMyCommunities({ page: 1, pageSize: 50 }),
     enabled: Boolean(user),
@@ -55,7 +70,7 @@ function CreateEventPageInner() {
     register,
     handleSubmit,
     setError: setFieldError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateEventValues>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -83,15 +98,23 @@ function CreateEventPageInner() {
         category: data.category,
       }),
     onSuccess: async () => {
+      setToast({ message: "Event created successfully!", type: "success" });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.events.all() }),
       ]);
-      router.push("/events");
+      setTimeout(() => {
+        router.push("/events");
+      }, 1000);
     },
     onError: (err) => {
       const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
       if (!hasFieldErrors) {
-        setServerError(getApiErrorMessage(err, "Failed to create event. Please check your permissions."));
+        setServerError(
+          getApiErrorMessage(
+            err,
+            "Failed to create event. You must be an authorized officer of the community to host events."
+          )
+        );
       }
     },
   });
@@ -102,182 +125,167 @@ function CreateEventPageInner() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link
-            href="/events"
-            className="text-sm text-gray-500 hover:text-gray-900 inline-flex items-center gap-1"
+    <div className="mx-auto max-w-2xl px-6 py-12 sm:px-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+
+      {/* Back button */}
+      <div className="mb-6">
+        <Link
+          href="/events"
+          className="text-sm font-bold text-muted hover:text-primary inline-flex items-center gap-1.5 transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back to Events
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="mb-8">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-primary mb-1">HOST AN EVENT</p>
+        <h1 className="text-3xl font-[800] tracking-[-0.035em] text-ink">Create Event</h1>
+        <p className="mt-1 text-sm text-muted">
+          Organize an official campus event. Note: only designated community officers are eligible to create events.
+        </p>
+      </div>
+
+      <Card className="p-6 sm:p-10" hoverEffect={false}>
+        {serverError && (
+          <div
+            className="mb-6 rounded-[14px] bg-coral-tint border border-coral-border p-4 text-sm font-semibold text-status-warning-text flex items-center gap-2.5"
+            role="alert"
           >
-            ← Back to Events
-          </Link>
-        </div>
+            <svg className="w-5 h-5 shrink-0 text-status-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{serverError}</span>
+          </div>
+        )}
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Host an Event</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Create an official event for one of your communities. Only club officers may host events.
-          </p>
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+          {/* Title */}
+          <Field id="title" label="Event Title" required error={errors.title?.message}>
+            <Input
+              id="title"
+              type="text"
+              placeholder="e.g. Annual Hackathon Kickoff"
+              hasError={Boolean(errors.title)}
+              {...register("title")}
+            />
+          </Field>
 
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          {serverError && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
-              {serverError}
-            </div>
-          )}
+          {/* Organizing Community */}
+          <Field
+            id="communityId"
+            label="Hosting Community"
+            required
+            hint="You must be a member of the community to organize an event."
+            error={errors.communityId?.message}
+          >
+            <Select
+              id="communityId"
+              hasError={Boolean(errors.communityId)}
+              disabled={isLoadingCommunities}
+              {...register("communityId")}
+            >
+              <option value="">Select one of your communities...</option>
+              {myCommunities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.communityName} ({c.communityType})
+                </option>
+              ))}
+            </Select>
+          </Field>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                Event Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="title"
-                type="text"
-                {...register("title")}
-                className={`w-full rounded-md border py-2 px-3 text-sm ${
-                  errors.title ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="communityId" className="block text-sm font-medium text-gray-700 mb-1">
-                Hosting Community <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="communityId"
-                {...register("communityId")}
-                className={`w-full rounded-md border py-2 px-3 text-sm ${
-                  errors.communityId ? "border-red-500" : "border-gray-300"
-                }`}
-              >
-                <option value="">Select a community...</option>
-                {myCommunities.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.communityName} ({c.communityType})
+          {/* Category & Visibility Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field id="category" label="Category" required error={errors.category?.message}>
+              <Select id="category" hasError={Boolean(errors.category)} {...register("category")}>
+                {EVENT_CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
                   </option>
                 ))}
-              </select>
-              {errors.communityId && <p className="mt-1 text-xs text-red-600">{errors.communityId.message}</p>}
-            </div>
+              </Select>
+            </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="category"
-                  {...register("category")}
-                  className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm"
-                >
-                  {EVENT_CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <Field id="visibility" label="Visibility" required error={errors.visibility?.message}>
+              <Select id="visibility" hasError={Boolean(errors.visibility)} {...register("visibility")}>
+                <option value="Public">Public (all students)</option>
+                <option value="Private">Private (club members only)</option>
+              </Select>
+            </Field>
+          </div>
 
-              <div>
-                <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-1">
-                  Visibility <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="visibility"
-                  {...register("visibility")}
-                  className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm"
-                >
-                  <option value="Public">Public (all students)</option>
-                  <option value="Private">Private (community members only)</option>
-                </select>
-              </div>
-            </div>
+          {/* Location */}
+          <Field id="location" label="Location" required error={errors.location?.message}>
+            <Input
+              id="location"
+              type="text"
+              placeholder="e.g. Science Hall 102 or Courtyard"
+              hasError={Boolean(errors.location)}
+              {...register("location")}
+            />
+          </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date & Time <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="eventDate"
-                  type="datetime-local"
-                  {...register("eventDate")}
-                  className={`w-full rounded-md border py-2 px-3 text-sm ${
-                    errors.eventDate ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.eventDate && <p className="mt-1 text-xs text-red-600">{errors.eventDate.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="eventEndDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date & Time <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="eventEndDate"
-                  type="datetime-local"
-                  {...register("eventEndDate")}
-                  className={`w-full rounded-md border py-2 px-3 text-sm ${
-                    errors.eventEndDate ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.eventEndDate && <p className="mt-1 text-xs text-red-600">{errors.eventEndDate.message}</p>}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                Location <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="location"
-                type="text"
-                placeholder="e.g. Campus Student Union, Room 204"
-                {...register("location")}
-                className={`w-full rounded-md border py-2 px-3 text-sm ${
-                  errors.location ? "border-red-500" : "border-gray-300"
-                }`}
+          {/* Dates Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field id="eventDate" label="Starts At" required error={errors.eventDate?.message}>
+              <Input
+                id="eventDate"
+                type="datetime-local"
+                hasError={Boolean(errors.eventDate)}
+                {...register("eventDate")}
               />
-              {errors.location && <p className="mt-1 text-xs text-red-600">{errors.location.message}</p>}
-            </div>
+            </Field>
 
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                placeholder="Describe your event, agenda, and expectations..."
-                {...register("description")}
-                className={`w-full rounded-md border py-2 px-3 text-sm ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                }`}
+            <Field id="eventEndDate" label="Ends At" required error={errors.eventEndDate?.message}>
+              <Input
+                id="eventEndDate"
+                type="datetime-local"
+                hasError={Boolean(errors.eventEndDate)}
+                {...register("eventEndDate")}
               />
-              {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>}
-            </div>
+            </Field>
+          </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Link href="/events">
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </Link>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isSubmitting || mutation.isPending}
-              >
-                {mutation.isPending ? "Creating Event..." : "Create Event"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
+          {/* Description */}
+          <Field id="description" label="Description" required error={errors.description?.message}>
+            <Textarea
+              id="description"
+              rows={4}
+              placeholder="Tell students about activities, speakers, or items to bring..."
+              hasError={Boolean(errors.description)}
+              {...register("description")}
+            />
+          </Field>
+
+          {/* Action Buttons */}
+          <div className="pt-4 border-t border-border-divider flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+            <Button href="/events" variant="outline" className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full sm:w-auto"
+              loading={mutation.isPending}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "Publishing..." : "Publish Event"}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }

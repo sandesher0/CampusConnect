@@ -3,30 +3,40 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-gray-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <Link href="/" className="text-xl font-semibold text-gray-900 tracking-tight">
-            CampusConnect
+    <footer className="bg-footer text-footer-text border-t border-footer-border mt-auto">
+      <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex flex-col items-center md:items-start gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="CampusConnect home">
+            <div className="h-8 w-8 rounded-[9px] bg-primary flex items-center justify-center text-white shrink-0">
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <path d="M16 8a5.5 5.5 0 1 0 0 8" />
+              </svg>
+            </div>
+            <span className="text-lg font-[800] tracking-[-0.03em] text-white">
+              CampusConnect
+            </span>
           </Link>
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} CampusConnect. All rights reserved.
+          <p className="text-xs text-footer-muted">
+            © {new Date().getFullYear()} CampusConnect. Built for students.
           </p>
         </div>
 
-        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
-          <Link href="/events" className="hover:text-gray-900 transition-colors">
+        <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-footer-muted">
+          <Link href="/events" className="hover:text-white transition-colors">
             Events
           </Link>
-          <Link href="/community" className="hover:text-gray-900 transition-colors">
-            Community
+          <Link href="/community" className="hover:text-white transition-colors">
+            Communities
           </Link>
-          <a href="#" className="hover:text-gray-900 transition-colors">
+          <Link href="/resources" className="hover:text-white transition-colors">
+            Resources
+          </Link>
+          <Link href="/privacy" className="hover:text-white transition-colors">
             Privacy
-          </a>
-          <a href="#" className="hover:text-gray-900 transition-colors">
+          </Link>
+          <Link href="/terms" className="hover:text-white transition-colors">
             Terms
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>

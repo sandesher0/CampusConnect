@@ -7,10 +7,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePasswordValues } from "@/validations/auth";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/services/authService";
+import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
+import Avatar from "@/components/common/Avatar";
+import Field from "@/components/common/Field";
+import Input from "@/components/common/Input";
+import Toast from "@/components/common/Toast";
+import PageHeader from "@/components/common/PageHeader";
+import EmptyState from "@/components/common/EmptyState";
 import { getApiErrorMessage } from "@/lib/apiError";
 import { handleServerValidationErrors } from "@/utils/formErrors";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
@@ -18,7 +24,7 @@ export default function ProfilePage() {
   const { user, logout } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const {
@@ -49,175 +55,155 @@ export default function ProfilePage() {
   };
 
   const onChangePassword = async (data: ChangePasswordValues) => {
-    setPasswordSuccess(null);
     setPasswordError(null);
     try {
       const message = await authService.changePassword(data);
-      setPasswordSuccess(message || "Password changed successfully.");
+      setToast({ message: message || "Password updated successfully!", type: "success" });
       reset();
     } catch (err) {
       const hasFieldErrors = handleServerValidationErrors(err, setFieldError);
       if (!hasFieldErrors) {
-        setPasswordError(getApiErrorMessage(err, "Failed to change password. Check your old password."));
+        setPasswordError(getApiErrorMessage(err, "Failed to update password. Please check your current password."));
       }
     }
   };
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
-        <p className="text-gray-500 mb-4">Please sign in to view your profile.</p>
-        <Link href="/login">
-          <Button variant="primary">Sign In</Button>
-        </Link>
+      <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8">
+        <EmptyState
+          title="Sign in to view your profile"
+          description="Manage your account preferences, student details, and password security."
+          action={
+            <Button href="/login?redirect=/profile" variant="primary">
+              Log in to your account
+            </Button>
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Account Profile</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            View your verified student profile and manage your security settings.
-          </p>
+    <div className="mx-auto max-w-4xl px-6 py-12 sm:px-8 space-y-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+
+      <PageHeader
+        eyebrow="ACCOUNT SETTINGS"
+        title="Profile"
+        description="View your enrolled student profile and manage account security."
+      />
+
+      {logoutError && (
+        <div className="rounded-[14px] bg-coral-tint border border-coral-border p-4 text-sm font-semibold text-status-warning-text" role="alert">
+          {logoutError}
         </div>
+      )}
 
-        {logoutError && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
-            {logoutError}
-          </div>
-        )}
-
-        {/* Profile Information (Read-only from Backend AccountInfo) */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          <div className="flex items-center justify-between border-b pb-4 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Profile Information</h2>
-            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-              Verified Student Account
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs font-medium text-gray-500">Username</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{user.username}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-gray-500">Email Address</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{user.user.email}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-gray-500">First Name</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{user.user.firstName}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-gray-500">Last Name</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{user.user.lastName}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-gray-500">Phone Number</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{user.user.phoneNumber || "Not provided"}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-gray-500">Account Verification</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {user.accountVerifiedAt ? new Date(user.accountVerifiedAt).toLocaleDateString() : "Active"}
-              </p>
+      {/* Profile Header Card */}
+      <Card className="p-6 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6" hoverEffect={false}>
+        <div className="flex items-center gap-5">
+          <Avatar name={user.user.firstName || user.username} size="lg" className="h-16 w-16 text-xl" />
+          <div>
+            <h2 className="text-2xl font-[800] text-ink">
+              {user.user.firstName} {user.user.lastName}
+            </h2>
+            <p className="text-sm font-semibold text-muted">@{user.username}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-tint text-primary-on-tint font-bold">
+                Student Account
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Change Password Card */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-4 mb-6">
+        <Button
+          variant="outline"
+          onClick={() => void handleLogout()}
+          loading={isLoggingOut}
+          disabled={isLoggingOut}
+          className="text-status-warning-text hover:bg-coral-tint hover:border-coral-border"
+        >
+          {isLoggingOut ? "Signing out..." : "Log out"}
+        </Button>
+      </Card>
+
+      {/* Account Details & Security Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        {/* Read-only details */}
+        <Card className="p-6 sm:p-8 space-y-4" hoverEffect={false}>
+          <h3 className="text-lg font-[800] text-ink pb-2 border-b border-border-divider">
+            Account Information
+          </h3>
+
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="text-xs font-bold text-muted">EMAIL</p>
+              <p className="font-semibold text-ink mt-0.5">{user.user.email}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-muted">PHONE NUMBER</p>
+              <p className="font-semibold text-ink mt-0.5">{user.user.phoneNumber || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-muted">ACCOUNT ID</p>
+              <p className="font-mono text-xs text-muted mt-0.5">{user.id}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Change Password Card using Form kit */}
+        <Card className="p-6 sm:p-8 space-y-5" hoverEffect={false}>
+          <h3 className="text-lg font-[800] text-ink pb-2 border-b border-border-divider">
             Change Password
-          </h2>
-
-          {passwordSuccess && (
-            <div className="mb-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-md text-sm" role="status">
-              {passwordSuccess}
-            </div>
-          )}
+          </h3>
 
           {passwordError && (
-            <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md text-sm" role="alert">
+            <div className="rounded-[14px] bg-coral-tint border border-coral-border p-3 text-xs font-semibold text-status-warning-text" role="alert">
               {passwordError}
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onChangePassword)} className="space-y-4 max-w-lg">
-            <div>
-              <label
-                htmlFor="oldPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Current Password
-              </label>
-              <input
+          <form onSubmit={handleSubmit(onChangePassword)} className="space-y-4" noValidate>
+            <Field id="oldPassword" label="Current Password" required error={errors.oldPassword?.message}>
+              <Input
                 id="oldPassword"
                 type="password"
+                autoComplete="current-password"
+                placeholder="Enter current password"
+                hasError={Boolean(errors.oldPassword)}
                 {...register("oldPassword")}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
-                  errors.oldPassword ? "border-red-500" : ""
-                }`}
               />
-              {errors.oldPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.oldPassword.message}</p>
-              )}
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                New Password
-              </label>
-              <input
+            <Field id="newPassword" label="New Password" required error={errors.newPassword?.message}>
+              <Input
                 id="newPassword"
                 type="password"
+                autoComplete="new-password"
+                placeholder="Enter new strong password"
+                hasError={Boolean(errors.newPassword)}
                 {...register("newPassword")}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border ${
-                  errors.newPassword ? "border-red-500" : ""
-                }`}
               />
-              {errors.newPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.newPassword.message}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Must be at least 8 characters with uppercase, lowercase, number, and special character.
-              </p>
-            </div>
+            </Field>
 
             <Button
               type="submit"
               variant="primary"
+              className="w-full mt-2"
+              loading={isSubmitting}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Updating Password..." : "Update Password"}
             </Button>
           </form>
-        </div>
-
-        {/* Account Actions */}
-        <div className="flex justify-end pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            className="text-red-600 border-red-300 hover:bg-red-50"
-            disabled={isLoggingOut}
-            onClick={handleLogout}
-          >
-            {isLoggingOut ? "Signing Out..." : "Sign Out of CampusConnect"}
-          </Button>
-        </div>
+        </Card>
       </div>
     </div>
   );

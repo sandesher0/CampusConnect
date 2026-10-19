@@ -1,39 +1,46 @@
 // Ref: workflow.md §4 Architecture Patterns | Feature: Events Page
 "use client";
 
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
-import Button from "@/components/common/Button";
-import { getApiErrorMessage } from "@/lib/apiError";
-import Pagination from "@/components/common/Pagination";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
+import PageHeader from "@/components/common/PageHeader";
+import Card from "@/components/common/Card";
+import CategoryChip from "@/components/common/CategoryChip";
+import StatusDot from "@/components/common/StatusDot";
+import Skeleton from "@/components/common/Skeleton";
+import EmptyState from "@/components/common/EmptyState";
+import ErrorState from "@/components/common/ErrorState";
+import Pagination from "@/components/common/Pagination";
+import Button from "@/components/common/Button";
 import type { EventSummaryResponse } from "@/types/event";
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Academic: "bg-blue-50 text-blue-700",
-  Social: "bg-purple-50 text-purple-700",
-  Sports: "bg-green-50 text-green-700",
-  Cultural: "bg-yellow-50 text-yellow-700",
-  Career: "bg-orange-50 text-orange-700",
-  Volunteering: "bg-teal-50 text-teal-700",
-  Other: "bg-gray-100 text-gray-600",
-};
 
 export default function EventsPage() {
   return (
-    <Suspense fallback={<div className="min-h-[calc(100vh-160px)] flex items-center justify-center text-gray-500">Loading events...</div>}>
-      <EventsPageInner />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
+          <Skeleton className="h-10 w-48 mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <EventsPageContent />
     </Suspense>
   );
 }
 
-function EventsPageInner() {
+function EventsPageContent() {
   const {
     items: events,
-    page,
     totalPages,
+    page,
     setPage,
     status,
     isFetching,
@@ -41,95 +48,137 @@ function EventsPageInner() {
     refetch,
   } = usePaginatedQuery<EventSummaryResponse>({
     queryKeyPrefix: queryKeys.events.all(),
-    queryFn: (params) => eventService.getEvents(params),
+    queryFn: eventService.getEvents,
     defaultPageSize: 12,
   });
 
-  if (status === "error") {
-    return (
-      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
-        <p className="text-gray-600 mb-4" role="alert">
-          {getApiErrorMessage(error, "Failed to load events.")}
-        </p>
-        <Button variant="outline" onClick={() => void refetch()}>
-          Try Again
-        </Button>
-      </div>
-    );
-  }
+  const now = new Date();
+
+  const formatEventDateTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      const weekday = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      return `${weekday} · ${time}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Campus Events</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Explore upcoming activities, workshops, and gatherings
-            </p>
-          </div>
-          <Link
-            href="/events/create"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 bg-gray-900 text-white shadow-sm hover:bg-gray-800 transition-colors whitespace-nowrap"
-          >
-            + Host Event
-          </Link>
-        </div>
+    <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8">
+      <PageHeader
+        eyebrow="What's on"
+        title="Events"
+        description="Discover talks, club meetups, sports games, and social mixers happening across campus."
+        action={
+          <Button href="/events/create" variant="primary">
+            Host an Event
+          </Button>
+        }
+      />
 
-        {status === "pending" ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse space-y-3">
-                <div className="h-5 bg-gray-200 rounded w-3/4" />
-                <div className="h-4 bg-gray-100 rounded w-1/2" />
-                <div className="h-4 bg-gray-100 rounded w-1/3" />
+      {/* Loading Skeleton Grid */}
+      {status === "pending" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="p-6 space-y-4" hoverEffect={false}>
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-4 w-28" />
               </div>
-            ))}
-          </div>
-        ) : events.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <h3 className="text-base font-semibold text-gray-900">No events scheduled</h3>
-            <p className="mt-1 text-sm text-gray-500">Check back later or host one yourself!</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {events.map((event) => (
-                <Link
+              <Skeleton className="h-7 w-4/5" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="pt-4 border-t border-border-divider">
+                <Skeleton className="h-11 w-full rounded-full" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Error State */}
+      {status === "error" && (
+        <ErrorState
+          error={error}
+          onRetry={() => void refetch()}
+          fallbackMessage="Unable to load campus events. Please check your network and try again."
+        />
+      )}
+
+      {/* Empty State */}
+      {status === "success" && events.length === 0 && (
+        <EmptyState
+          title="No upcoming events found"
+          description="There are currently no upcoming events posted on campus. Be the first to create one for your community!"
+          action={
+            <Button href="/events/create" variant="primary">
+              Create an Event
+            </Button>
+          }
+        />
+      )}
+
+      {/* Events Grid with staggered rise */}
+      {status === "success" && events.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event, index) => {
+              const isHappeningNow =
+                new Date(event.eventDate) <= now && new Date(event.eventEndDate) >= now;
+              // Stagger rise on first 6 items
+              const delayClass = index < 6 ? `animate-rise delay-${index * 80}` : "";
+
+              return (
+                <Card
                   key={event.id}
-                  href={`/events/${event.id}`}
-                  className="bg-white rounded-lg border border-gray-200 p-6 hover:border-gray-300 transition-shadow shadow-sm hover:shadow flex flex-col justify-between"
+                  className={`p-6 flex flex-col justify-between ${delayClass}`}
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${CATEGORY_COLORS[event.category] ?? "bg-gray-100 text-gray-600"}`}>
-                        {event.category}
-                      </span>
-                      <span className="text-xs text-gray-500">{event.visibility}</span>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <CategoryChip category={event.category} />
+                      {isHappeningNow ? (
+                        <StatusDot status="good" label="Happening now" pulse />
+                      ) : (
+                        <span className="text-xs font-bold text-muted">
+                          {formatEventDateTime(event.eventDate)}
+                        </span>
+                      )}
                     </div>
-                    <h3 className="font-semibold text-lg text-gray-900 mb-2 hover:text-blue-600 transition-colors">
-                      {event.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-1">
-                      📍 {event.location}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      📅 {new Date(event.eventDate).toLocaleDateString()} at {new Date(event.eventDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
 
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              isLoading={isFetching}
-            />
-          </>
-        )}
-      </div>
+                    <Link href={`/events/${event.id}`} className="group block focus-visible:outline-none">
+                      <h2 className="text-[22px] font-[800] leading-snug text-ink group-hover:text-primary transition-colors">
+                        {event.title}
+                      </h2>
+                    </Link>
+
+                    <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
+                      <svg className="w-4 h-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-border-divider">
+                    <Button href={`/events/${event.id}`} variant="primary" className="w-full">
+                      View Event & Reserve
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            isLoading={isFetching}
+          />
+        </>
+      )}
     </div>
   );
 }

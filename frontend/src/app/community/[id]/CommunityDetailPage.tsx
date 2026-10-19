@@ -9,26 +9,40 @@ import { communityService } from "@/services/communityService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/apiError";
-import Pagination from "@/components/common/Pagination";
+import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
+import Avatar from "@/components/common/Avatar";
+import Skeleton from "@/components/common/Skeleton";
+import ErrorState from "@/components/common/ErrorState";
+import Pagination from "@/components/common/Pagination";
+import Toast from "@/components/common/Toast";
 import { MemberTypeLabels } from "@/types/community";
 
 export default function CommunityDetailPage() {
   return (
-    <Suspense fallback={<div className="py-8 text-center text-gray-500">Loading...</div>}>
-      <CommunityDetailInner />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-4xl px-6 py-12 sm:px-8 space-y-6">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-44 w-full rounded-[24px]" />
+          <Skeleton className="h-72 w-full rounded-[24px]" />
+        </div>
+      }
+    >
+      <CommunityDetailContent />
     </Suspense>
   );
 }
 
-function CommunityDetailInner() {
+function CommunityDetailContent() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const fromMine = searchParams.get("from") === "mine";
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+
   const [membersPage, setMembersPage] = useState(1);
-  const [joinFeedback, setJoinFeedback] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const { data: community, status, isFetching, error, refetch } = useQuery({
     queryKey: queryKeys.communities.detail(id, { page: membersPage, pageSize: 20 }),
@@ -39,13 +53,13 @@ function CommunityDetailInner() {
   const joinMutation = useMutation({
     mutationFn: () => communityService.joinCommunity(id),
     onSuccess: async () => {
-      setJoinFeedback("You have successfully joined this community!");
+      setToast({ message: "You have joined this community!", type: "success" });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.communities.all() }),
       ]);
     },
     onError: (err) => {
-      setJoinFeedback(getApiErrorMessage(err, "Failed to join community."));
+      setToast({ message: getApiErrorMessage(err, "Failed to join community."), type: "error" });
     },
   });
 
@@ -55,128 +69,127 @@ function CommunityDetailInner() {
 
   if (status === "pending") {
     return (
-      <div className="py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse space-y-4">
-          <div className="h-6 bg-gray-100 rounded w-1/3" />
-          <div className="h-4 bg-gray-100 rounded w-1/4" />
-          <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <div className="h-4 bg-gray-100 rounded w-full" />
-            <div className="h-4 bg-gray-100 rounded w-3/4" />
-          </div>
-        </div>
+      <div className="mx-auto max-w-4xl px-6 py-12 sm:px-8 space-y-6">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-44 w-full rounded-[24px]" />
+        <Skeleton className="h-72 w-full rounded-[24px]" />
       </div>
     );
   }
 
   if (status === "error" || !community) {
     return (
-      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
-        <p className="text-gray-600 mb-4" role="alert">
-          {getApiErrorMessage(error, "Community not found.")}
-        </p>
-        <div className="flex gap-3">
-          <Link href="/community">
-            <Button variant="outline">Back to Communities</Button>
-          </Link>
-          <Button variant="primary" onClick={() => void refetch()}>
-            Try Again
-          </Button>
-        </div>
+      <div className="mx-auto max-w-4xl px-6 py-16 sm:px-8">
+        <ErrorState
+          error={error}
+          onRetry={() => void refetch()}
+          fallbackMessage="The requested community could not be found."
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center gap-2 text-sm text-gray-500">
-          <Link href={fromMine ? "/community/mine" : "/community"} className="hover:text-gray-900">
-            {fromMine ? "My Communities" : "Communities"}
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">{community.communityName}</span>
-        </div>
+    <div className="mx-auto max-w-4xl px-6 py-12 sm:px-8 space-y-8">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
 
-        {joinFeedback && (
-          <div className="mb-6 p-4 bg-blue-50 text-blue-800 rounded-md text-sm flex justify-between items-center" role="status">
-            <span>{joinFeedback}</span>
-            <button type="button" onClick={() => setJoinFeedback(null)} className="text-blue-500 hover:text-blue-700">
-              Dismiss
-            </button>
-          </div>
-        )}
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm font-semibold text-muted">
+        <Link
+          href={fromMine ? "/community/mine" : "/community"}
+          className="hover:text-primary transition-colors"
+        >
+          {fromMine ? "My Communities" : "Communities"}
+        </Link>
+        <span>/</span>
+        <span className="text-ink truncate max-w-sm">{community.communityName}</span>
+      </div>
 
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">{community.communityName}</h1>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium">
-                  {community.communityType}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-gray-500">
-                Created by user {community.createdBy}
-              </p>
+      {/* Header Info Card */}
+      <Card className="p-6 sm:p-10" hoverEffect={false}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-[800] text-ink">
+                {community.communityName}
+              </h1>
+              <span className="text-xs px-3 py-1 rounded-full bg-primary-tint text-primary-on-tint font-bold">
+                {community.communityType}
+              </span>
             </div>
+            <p className="mt-2 text-xs font-semibold text-muted">
+              Official student organization on CampusConnect
+            </p>
+          </div>
 
+          <div>
             {user && community.communityType === "Public" && !isMember && (
               <Button
                 variant="primary"
                 onClick={() => joinMutation.mutate()}
+                loading={joinMutation.isPending}
                 disabled={joinMutation.isPending}
+                aria-busy={joinMutation.isPending}
               >
                 {joinMutation.isPending ? "Joining..." : "Join Community"}
               </Button>
             )}
 
             {isMember && (
-              <span className="text-xs px-3 py-1.5 rounded-md bg-green-50 text-green-700 border border-green-200 font-medium">
-                You are a member
-              </span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-status-good-bg border border-border-card text-status-good-text text-xs font-bold">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span>You are a member</span>
+              </div>
             )}
           </div>
         </div>
+      </Card>
 
-        {/* Members List */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Community Members ({community.communityMembers?.totalCount ?? 0})
-          </h2>
+      {/* Members List Card */}
+      <Card className="p-6 sm:p-10" hoverEffect={false}>
+        <h2 className="text-xl font-[800] text-ink mb-6">
+          Community Members ({community.communityMembers?.totalCount ?? 0})
+        </h2>
 
-          {members.length === 0 ? (
-            <p className="text-sm text-gray-500">No members listed yet.</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {members.map((member) => (
-                <div key={member.memberId} className="py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
-                      {member.user.firstName.charAt(0)}{member.user.lastName.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {member.user.firstName} {member.user.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500">{member.user.email}</p>
-                    </div>
+        {members.length === 0 ? (
+          <p className="text-sm text-muted py-4">No members listed yet.</p>
+        ) : (
+          <div className="divide-y divide-border-divider">
+            {members.map((member) => (
+              <div key={member.memberId} className="py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <Avatar name={member.user.firstName || member.user.email} size="md" />
+                  <div>
+                    <p className="text-sm font-bold text-ink">
+                      {member.user.firstName} {member.user.lastName}
+                    </p>
+                    <p className="text-xs text-muted font-medium">{member.user.email}</p>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">
-                    {MemberTypeLabels[member.memberType] ?? "Member"}
-                  </span>
                 </div>
-              ))}
-            </div>
-          )}
 
-          <Pagination
-            page={membersPage}
-            totalPages={totalPages}
-            onPageChange={setMembersPage}
-            isLoading={isFetching}
-          />
-        </div>
-      </div>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-page border border-border-card text-muted">
+                  {MemberTypeLabels[member.memberType] ?? "Member"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Pagination
+          page={membersPage}
+          totalPages={totalPages}
+          onPageChange={setMembersPage}
+          isLoading={isFetching}
+        />
+      </Card>
     </div>
   );
 }

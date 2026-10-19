@@ -1,33 +1,53 @@
-// Ref: workflow.md §4 Architecture Patterns | Feature: Events
+// Ref: workflow.md §4 Architecture Patterns | Feature: Event Detail
 "use client";
 
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/lib/apiError";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef } from "react";
 import { eventService } from "@/services/eventService";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
-import Pagination from "@/components/common/Pagination";
+import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
-import { ApiError } from "@/types/api";
+import CategoryChip from "@/components/common/CategoryChip";
+import Avatar from "@/components/common/Avatar";
+import StatusDot from "@/components/common/StatusDot";
+import Skeleton from "@/components/common/Skeleton";
+import ErrorState from "@/components/common/ErrorState";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import Toast from "@/components/common/Toast";
+import Pagination from "@/components/common/Pagination";
+import type { EventReservationSummaryResponse } from "@/types/event";
 
 export default function EventDetailPage() {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-gray-500">Loading event...</div>}>
-      <EventDetailInner />
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <Skeleton className="lg:col-span-8 h-96" />
+            <Skeleton className="lg:col-span-4 h-64" />
+          </div>
+        </div>
+      }
+    >
+      <EventDetailContent />
     </Suspense>
   );
 }
 
-function EventDetailInner() {
+function EventDetailContent() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [feedback, setFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [reservationsPage, setReservationsPage] = useState(1);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const cancelBtnRef = useRef<HTMLButtonElement>(null);
 
   const {
     data: event,
@@ -42,7 +62,7 @@ function EventDetailInner() {
 
   const isOwner = user ? event?.createdBy === user.userId || event?.createdBy === user.id : false;
 
-  // Reservation details (visible to event owner)
+  // Reservation details (visible to event organizer)
   const {
     data: reservationsData,
     status: reservationsStatus,
@@ -67,21 +87,21 @@ function EventDetailInner() {
   const joinMutation = useMutation({
     mutationFn: () => eventService.joinEvent(id, event!.communityId),
     onSuccess: async () => {
-      setFeedback({ message: "You have successfully reserved your spot for this event!", type: "success" });
+      setToast({ message: "You're in! Your spot is saved.", type: "success" });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.events.myReservations() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.events.reservations(id) }),
       ]);
     },
     onError: (err) => {
-      setFeedback({ message: getApiErrorMessage(err, "Failed to join event."), type: "error" });
+      setToast({ message: getApiErrorMessage(err, "Failed to join event."), type: "error" });
     },
   });
 
   const cancelMutation = useMutation({
     mutationFn: () => eventService.cancelReservation(id),
     onSuccess: async () => {
-      setFeedback({ message: "Your reservation has been cancelled.", type: "success" });
+      setToast({ message: "Reservation cancelled.", type: "success" });
       setShowCancelConfirm(false);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.events.myReservations() }),
@@ -89,217 +109,265 @@ function EventDetailInner() {
       ]);
     },
     onError: (err) => {
-      setFeedback({ message: getApiErrorMessage(err, "Failed to cancel reservation."), type: "error" });
+      setToast({ message: getApiErrorMessage(err, "Failed to cancel reservation."), type: "error" });
     },
   });
 
   if (status === "pending") {
     return (
-      <div className="py-12 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse space-y-4">
-        <div className="h-6 bg-gray-200 rounded w-1/3" />
-        <div className="h-8 bg-gray-200 rounded w-2/3" />
-        <div className="h-32 bg-gray-100 rounded" />
+      <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 space-y-6">
+        <Skeleton className="h-6 w-40" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <Skeleton className="lg:col-span-8 h-96" />
+          <Skeleton className="lg:col-span-4 h-64" />
+        </div>
       </div>
     );
   }
 
   if (status === "error" || !event) {
     return (
-      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-12">
-        <p className="text-gray-600 mb-4" role="alert">
-          {getApiErrorMessage(error, "Event not found.")}
-        </p>
-        <div className="flex gap-3">
-          <Link href="/events">
-            <Button variant="outline">Back to Events</Button>
-          </Link>
-          <Button variant="primary" onClick={() => void refetch()}>
-            Try Again
-          </Button>
-        </div>
+      <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8">
+        <ErrorState
+          error={error}
+          onRetry={() => void refetch()}
+          fallbackMessage="The requested event could not be found."
+        />
       </div>
     );
   }
+
+  const now = new Date();
+  const isHappeningNow =
+    new Date(event.eventDate) <= now && new Date(event.eventEndDate) >= now;
 
   const reservations = reservationsData?.items ?? [];
   const totalReservationPages = reservationsData?.totalPages ?? 1;
 
   return (
-    <div className="min-h-[calc(100vh-160px)] py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/events" className="hover:text-gray-900">Events</Link>
-          <span>/</span>
-          <span className="text-gray-900 font-medium">{event.title}</span>
-        </div>
+    <div className="mx-auto max-w-[1200px] px-6 py-12 sm:px-8 space-y-8">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
 
-        {feedback && (
-          <div
-            className={`p-4 rounded-md text-sm flex justify-between items-center ${
-              feedback.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
-            }`}
-            role="status"
-          >
-            <span>{feedback.message}</span>
-            <button
-              type="button"
-              onClick={() => setFeedback(null)}
-              className="font-medium underline ml-4"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm font-semibold text-muted">
+        <Link href="/events" className="hover:text-primary transition-colors">
+          Events
+        </Link>
+        <span>/</span>
+        <span className="text-ink truncate max-w-sm">{event.title}</span>
+      </div>
 
-        {/* Event Detail Card */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
-                  {event.category}
+      {/* Two-Column Responsive Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Details Card */}
+        <div className="lg:col-span-8 space-y-8">
+          <Card className="p-6 sm:p-10" hoverEffect={false}>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <CategoryChip category={event.category} />
+                <span className="text-xs font-bold text-muted bg-primary-tint/50 px-3 py-1 rounded-full">
+                  {event.visibility}
                 </span>
-                <span className="text-xs text-gray-500">{event.visibility}</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Organized by{" "}
-                <Link
-                  href={`/community/${event.communityId}`}
-                  className="font-medium text-blue-600 hover:underline"
-                >
-                  {event.organizerCommunity.communityName}
-                </Link>
-              </p>
+              {isHappeningNow && (
+                <StatusDot status="good" label="Happening now" pulse />
+              )}
             </div>
 
-            {/* Action buttons */}
-            {user && (
-              <div>
-                {hasReserved ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-3 py-1.5 rounded-md bg-green-50 text-green-700 border border-green-200 font-medium">
-                      ✓ Registered
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => setShowCancelConfirm(true)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="primary"
-                    onClick={() => joinMutation.mutate()}
-                    disabled={joinMutation.isPending}
-                  >
-                    {joinMutation.isPending ? "Reserving..." : "Reserve Spot"}
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+            <h1 className="text-3xl sm:text-4xl font-[800] leading-tight text-ink">
+              {event.title}
+            </h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-y border-gray-100 text-sm">
-            <div>
-              <p className="text-gray-500 text-xs font-medium">WHEN</p>
-              <p className="mt-1 text-gray-900 font-medium">
-                {new Date(event.eventDate).toLocaleDateString()} at{" "}
-                {new Date(event.eventDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </p>
-              <p className="text-xs text-gray-500">
-                Until {new Date(event.eventEndDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-xs font-medium">WHERE</p>
-              <p className="mt-1 text-gray-900 font-medium">{event.location}</p>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">About this event</h2>
-            <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-              {event.description}
+            <p className="mt-3 text-sm font-semibold text-muted">
+              Organized by{" "}
+              <Link
+                href={`/community/${event.communityId}`}
+                className="text-primary hover:underline font-bold"
+              >
+                {event.organizerCommunity.communityName}
+              </Link>
             </p>
-          </div>
+
+            {/* When & Where Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8 p-6 rounded-[18px] bg-page border border-border-card text-sm">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-muted">WHEN</p>
+                <p className="mt-1 font-bold text-ink">
+                  {new Date(event.eventDate).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+                <p className="text-xs text-muted font-medium mt-0.5">
+                  {new Date(event.eventDate).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} –{" "}
+                  {new Date(event.eventEndDate).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-muted">WHERE</p>
+                <p className="mt-1 font-bold text-ink">{event.location}</p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <h2 className="text-xl font-[800] text-ink mb-3">About this event</h2>
+              <p className="text-base text-ink/80 leading-relaxed whitespace-pre-line">
+                {event.description}
+              </p>
+            </div>
+          </Card>
+
+          {/* Organizer Attendees Section */}
+          {isOwner && (
+            <Card className="p-6 sm:p-8" hoverEffect={false}>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-[800] text-ink">
+                    Attendees ({reservationsData?.totalCount ?? 0})
+                  </h2>
+                  <p className="text-xs text-muted font-medium mt-0.5">
+                    Only you and fellow organizers can view attendee details.
+                  </p>
+                </div>
+              </div>
+
+              {reservationsStatus === "pending" ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-2xl" />
+                  ))}
+                </div>
+              ) : reservationsStatus === "error" ? (
+                <ErrorState
+                  error={reservationsError}
+                  fallbackMessage="Unable to load attendee reservations."
+                />
+              ) : reservations.length === 0 ? (
+                <p className="text-sm text-muted py-4">No attendees have reserved spots yet.</p>
+              ) : (
+                <div className="divide-y divide-border-divider">
+                  {reservations.map((r: EventReservationSummaryResponse) => (
+                    <div key={r.id} className="py-3.5 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={r.firstName} size="sm" />
+                        <div>
+                          <p className="text-sm font-bold text-ink">
+                            {r.firstName} {r.lastName}
+                          </p>
+                          <p className="text-xs text-muted font-medium">{r.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-muted">
+                        Reserved {new Date(r.reservedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Pagination
+                page={reservationsPage}
+                totalPages={totalReservationPages}
+                onPageChange={setReservationsPage}
+                isLoading={isFetchingReservations}
+              />
+            </Card>
+          )}
+
+          {/* Non-Organizer Friendly Indicator */}
+          {!isOwner && user && (
+            <div className="p-6 rounded-[22px] bg-primary-soft-tint/60 border border-border-card text-center">
+              <p className="text-xs font-bold text-primary-on-tint">
+                The full attendee list is only visible to the event organizer.
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Confirmation modal for cancellation */}
-        {showCancelConfirm && (
-          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg max-w-sm w-full p-6 space-y-4 shadow-xl">
-              <h3 className="font-semibold text-gray-900 text-lg">Cancel Reservation?</h3>
-              <p className="text-sm text-gray-600">
-                Are you sure you want to cancel your reservation for <strong>{event.title}</strong>? Your spot will be freed up.
+        {/* Right Column: Sticky Action Card */}
+        <div className="lg:col-span-4 sticky top-24">
+          <Card className="p-6 sm:p-8 space-y-6" hoverEffect={false}>
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wider text-primary">RESERVATION</p>
+              <h3 className="text-xl font-[800] text-ink mt-1">Join this event</h3>
+              <p className="text-xs text-muted font-medium mt-1">
+                Free for all registered students and community members.
               </p>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>
-                  Keep Reservation
-                </Button>
+            </div>
+
+            {/* Action State Patterns */}
+            {user ? (
+              hasReserved ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 p-3.5 rounded-[16px] bg-status-good-bg border border-border-card text-status-good-text">
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span className="text-xs font-bold">You have a spot reserved!</span>
+                  </div>
+
+                  <Button
+                    ref={cancelBtnRef}
+                    variant="outline"
+                    className="w-full text-status-warning-text hover:bg-coral-tint hover:border-coral-border"
+                    onClick={() => setShowCancelConfirm(true)}
+                  >
+                    Cancel Reservation
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   variant="primary"
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  disabled={cancelMutation.isPending}
-                  onClick={() => cancelMutation.mutate()}
+                  className="w-full"
+                  size="lg"
+                  disabled={joinMutation.isPending}
+                  loading={joinMutation.isPending}
+                  onClick={() => joinMutation.mutate()}
+                  aria-busy={joinMutation.isPending}
                 >
-                  {cancelMutation.isPending ? "Cancelling..." : "Confirm Cancel"}
+                  {joinMutation.isPending ? "Reserving Spot..." : "Reserve My Spot"}
                 </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Organizer Attendee List */}
-        {isOwner && (
-          <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 sm:p-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Attendee Roster ({reservationsData?.totalCount ?? 0})
-              </h2>
-              <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-2 py-1 rounded">
-                Organizer View
-              </span>
-            </div>
-
-            {reservationsStatus === "pending" ? (
-              <p className="text-sm text-gray-500 py-4">Loading attendees...</p>
-            ) : reservationsError instanceof ApiError && reservationsError.status === 403 ? (
-              <div className="p-4 bg-gray-50 rounded text-sm text-gray-600">
-                You do not have permission to view the attendee list.
-              </div>
-            ) : reservations.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">No reservations yet.</p>
+              )
             ) : (
-              <div className="divide-y divide-gray-100">
-                {reservations.map((attendee) => (
-                  <div key={attendee.id} className="py-3 flex items-center justify-between text-sm">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {attendee.firstName} {attendee.lastName}
-                      </p>
-                      <p className="text-xs text-gray-500">{attendee.email}</p>
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      Reserved {new Date(attendee.reservedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
+              <div className="space-y-3">
+                <Button href={`/login?redirect=/events/${id}`} variant="primary" className="w-full">
+                  Sign in to Reserve
+                </Button>
+                <p className="text-xs text-center text-muted font-medium">
+                  Don&apos;t have an account?{" "}
+                  <Link href="/register" className="text-primary font-bold hover:underline">
+                    Sign up free
+                  </Link>
+                </p>
               </div>
             )}
-
-            <Pagination
-              page={reservationsPage}
-              totalPages={totalReservationPages}
-              onPageChange={setReservationsPage}
-              isLoading={isFetchingReservations}
-            />
-          </div>
-        )}
+          </Card>
+        </div>
       </div>
+
+      {/* Accessible Native Cancel Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={() => cancelMutation.mutate()}
+        title="Cancel Reservation?"
+        description={`Are you sure you want to cancel your reservation for "${event.title}"? Your spot will be freed up for fellow students.`}
+        confirmLabel="Confirm Cancel"
+        cancelLabel="Keep Reservation"
+        isDestructive={true}
+        isLoading={cancelMutation.isPending}
+        triggerRef={cancelBtnRef}
+      />
     </div>
   );
 }
