@@ -10,4 +10,5 @@ public interface ICommunityRepository : IBaseRepository<CommunityEntity>
     Task<PagedResult<Community>> GetAllPublicCommunitiesAsync(PageRequest page, CancellationToken cancellationToken);
     Task<PagedResult<Community>> GetMyCommunitiesAsync(Guid userId, PageRequest page, CancellationToken cancellationToken);
     Task<PagedResult<Community>> SearchCommunityAsync(string searchKeyWord, PageRequest page, CancellationToken cancellationToken);
+    Task<int> CountCreatedByUserAsync(Guid userId, CancellationToken cancellationToken);
 }
