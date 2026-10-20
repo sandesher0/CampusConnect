@@ -36,4 +36,20 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
                     .SingleOrDefaultAsync(cancellationToken);
         return eventDetail;
     }
+
+    public async Task<int> CountTotalCreatedByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .Where(e => e.CreatedBy == userId)
+            .CountAsync(cancellationToken);
+    }
+
+    public async Task<int> CountActiveCreatedByUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .Where(e => e.CreatedBy == userId && e.DeletedAt == null && e.EventEndDate > now)
+            .CountAsync(cancellationToken);
+    }
 }

@@ -7,12 +7,10 @@ using SharedKernel.Constants;
 
 namespace Infrastructure.Repositories;
 
-
 public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>, ICommunityRepository
 {
     public CommunityRepository(AppDbContext context) : base(context)
     {
-
     }
     public async Task<PagedResult<Community>> GetAllPublicCommunitiesAsync(PageRequest page, CancellationToken cancellationToken)
     {
@@ -55,5 +53,13 @@ public class CommunityRepository : BaseRepository<AppDbContext, CommunityEntity>
             .ToPagedAsync(page, cancellationToken);
 
         return pagedEntities.Map(CommunityEntityToDomain.ToDomain);
+    }
+
+    public async Task<int> CountCreatedByUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .Where(c => c.CreatedBy == userId && c.DeletedAt == null)
+            .CountAsync(cancellationToken);
     }
 }

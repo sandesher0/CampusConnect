@@ -224,9 +224,69 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("EventId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"DeletedAt\" IS NULL");
 
                     b.ToTable("EventReservation");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.PlanEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\" = TRUE");
+
+                    b.ToTable("Plans");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.PlanLimitEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LimitKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Value")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId", "LimitKey")
+                        .IsUnique();
+
+                    b.ToTable("PlanLimits");
                 });
 
             modelBuilder.Entity("SharedKernel.Entities.UserEntity", b =>
@@ -265,6 +325,36 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.UserPlanEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ValidFrom")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ValidTo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("UserId", "ValidFrom");
+
+                    b.ToTable("UserPlans");
                 });
 
             modelBuilder.Entity("Modules.Events.Domain.EventEntity", b =>
@@ -352,6 +442,46 @@ namespace Infrastructure.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.PlanLimitEntity", b =>
+                {
+                    b.HasOne("SharedKernel.Entities.PlanEntity", "Plan")
+                        .WithMany("Limits")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.UserPlanEntity", b =>
+                {
+                    b.HasOne("SharedKernel.Entities.PlanEntity", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SharedKernel.Entities.UserEntity", "User")
+                        .WithMany("UserPlans")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.PlanEntity", b =>
+                {
+                    b.Navigation("Limits");
+                });
+
+            modelBuilder.Entity("SharedKernel.Entities.UserEntity", b =>
+                {
+                    b.Navigation("UserPlans");
                 });
 #pragma warning restore 612, 618
         }

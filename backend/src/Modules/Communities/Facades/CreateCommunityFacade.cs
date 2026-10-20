@@ -1,9 +1,11 @@
 using Modules.Communities.Domain;
 using Modules.Communities.Ports;
+using Modules.Communities.Policies;
 using Modules.Communities.Mapper.ToEntities;
 using Microsoft.Extensions.Logging;
 using SharedKernel.Interfaces;
 using SharedKernel.Constants;
+using SharedKernel.Exceptions;
 
 namespace Modules.Communities.Facades;
 
@@ -11,17 +13,20 @@ public class CreateCommunityFacade : ICreateCommunityFacade
 {
     private readonly ICommunityRepository repository;
     private readonly ICommunityMemberRepository communityMemberRepository;
+    private readonly ICommunityCreationPolicy communityCreationPolicy;
     private readonly ILogger<CreateCommunityFacade> logger;
     private readonly IUnitOfWork unitOfWork;
 
     public CreateCommunityFacade(
         ICommunityRepository repository,
         ICommunityMemberRepository communityMemberRepository,
+        ICommunityCreationPolicy communityCreationPolicy,
         ILogger<CreateCommunityFacade> logger,
         IUnitOfWork unitOfWork)
     {
         this.repository = repository;
         this.communityMemberRepository = communityMemberRepository;
+        this.communityCreationPolicy = communityCreationPolicy;
         this.logger = logger;
         this.unitOfWork = unitOfWork;
     }
@@ -31,6 +36,12 @@ public class CreateCommunityFacade : ICreateCommunityFacade
         logger.LogInformation(
             "Community creation started. CreatedBy={UserId}, ClubName={ClubName}, ClubType={ClubType}",
             community.CreatedBy, community.CommunityName, community.CommunityType);
+
+        var policyResult = await communityCreationPolicy.EvaluateAsync(community.CreatedBy, cancellationToken);
+        if (!policyResult.Succeeded)
+        {
+            throw new PlanLimitExceededException(policyResult.LimitKey!, policyResult.Limit!.Value);
+        }
 
         var communityEntity = CommunityDomainToEntityMapper.ToEntity(community);
 
@@ -45,7 +56,6 @@ public class CreateCommunityFacade : ICreateCommunityFacade
             CommunityId = communityEntity.Id,
             MemberType = MemberType.ClubOfficer,
             UserId = community.CreatedBy,
-
         };
 
         var communityMemberEntity = CommunityMemberDomainToEntityMapper.ToEntity(communityMemberDomain);

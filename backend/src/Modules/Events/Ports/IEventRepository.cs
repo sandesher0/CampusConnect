@@ -11,4 +11,6 @@ public interface IEventRepository : IBaseRepository<EventEntity>
 {
     Task<PagedResult<Event>> GetAllPublicEventAsync(PageRequest page, CancellationToken cancellationToken);
     Task<EventEntity?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken);
+    Task<int> CountTotalCreatedByUserAsync(Guid userId, CancellationToken cancellationToken);
+    Task<int> CountActiveCreatedByUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
 }

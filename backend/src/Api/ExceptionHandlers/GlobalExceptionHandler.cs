@@ -86,6 +86,25 @@ public class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        if (exception is PlanLimitExceededException planLimitEx)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+            await Results.Problem(
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Plan Limit Reached",
+                detail: planLimitEx.Message,
+                extensions: new Dictionary<string, object?>
+                {
+                    { "code", "plan_limit_reached" },
+                    { "limitKey", planLimitEx.LimitKey },
+                    { "limit", planLimitEx.Limit }
+                }
+            ).ExecuteAsync(httpContext);
+
+            return true;
+        }
+
         if (exception is ForbiddenException)
         {
             httpContext.Response.StatusCode = StatusCodes.Status403Forbidden;

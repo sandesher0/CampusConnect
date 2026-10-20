@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 namespace SharedKernel.Entities;
 
 public class UserEntity
-
 {
     [Key]
     public Guid Id { get; set; }
@@ -19,4 +18,6 @@ public class UserEntity
     public required DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
+
+    public virtual ICollection<UserPlanEntity> UserPlans { get; set; } = new List<UserPlanEntity>();
 }

@@ -3,6 +3,7 @@ using Application.Ports;
 using Microsoft.Extensions.Logging;
 using Modules.Auth.Ports;
 using Modules.Communities.Ports;
+using Modules.Events.Policies;
 using Modules.Events.Ports;
 using SharedKernel.Exceptions;
 using SharedKernel.Interfaces;
@@ -14,19 +15,22 @@ public class CreateEventUseCase : ICreateEventUseCase
 {
     private readonly IGetUserIdByAccountIdFacade userIdByAccountIdFacade;
     private readonly ILogger<CreateEventUseCase> logger;
-    private readonly IEnsureCanCreateEventFacade ensureCanCreateCommunityFacade;
+    private readonly IEnsureCanCreateEventFacade ensureCanCreateEventFacade;
+    private readonly IEventCreationPolicy eventCreationPolicy;
     private readonly ICreateEventFacade createEventFacade;
     private readonly IUnitOfWork unitOfWork;
 
     public CreateEventUseCase(
             IGetUserIdByAccountIdFacade userIdByAccountIdFacade,
-            IEnsureCanCreateEventFacade ensureCanCreateCommunityFacade,
+            IEnsureCanCreateEventFacade ensureCanCreateEventFacade,
+            IEventCreationPolicy eventCreationPolicy,
             ILogger<CreateEventUseCase> logger,
             ICreateEventFacade createEventFacade,
             IUnitOfWork unitOfWork)
     {
         this.userIdByAccountIdFacade = userIdByAccountIdFacade;
-        this.ensureCanCreateCommunityFacade = ensureCanCreateCommunityFacade;
+        this.ensureCanCreateEventFacade = ensureCanCreateEventFacade;
+        this.eventCreationPolicy = eventCreationPolicy;
         this.logger = logger;
         this.createEventFacade = createEventFacade;
         this.unitOfWork = unitOfWork;
@@ -55,11 +59,16 @@ public class CreateEventUseCase : ICreateEventUseCase
             throw new AccountNotFoundException(accountId);
         }
 
-        await ensureCanCreateCommunityFacade.HandleAsync(
-        domain.CommunityId,
-        userId.Value,
-        cancellationToken);
+        await ensureCanCreateEventFacade.HandleAsync(
+            domain.CommunityId,
+            userId.Value,
+            cancellationToken);
 
+        var policyResult = await eventCreationPolicy.EvaluateAsync(userId.Value, cancellationToken);
+        if (!policyResult.Succeeded)
+        {
+            throw new PlanLimitExceededException(policyResult.LimitKey!, policyResult.Limit!.Value);
+        }
 
         await createEventFacade.HandleAsync(EventToEventsDomainMapper.ToDomain(domain, domain.CommunityId, userId.Value), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -71,5 +80,4 @@ public class CreateEventUseCase : ICreateEventUseCase
             userId.Value,
             domain.CommunityId);
     }
-
 }

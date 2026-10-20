@@ -91,6 +91,10 @@ builder.Services.AddScoped<
     CreateCommunityFacade>();
 
 builder.Services.AddScoped<
+    Modules.Communities.Policies.ICommunityCreationPolicy,
+    Modules.Communities.Policies.CommunityCreationPolicy>();
+
+builder.Services.AddScoped<
     ICommunityRepository,
     CommunityRepository>();
 
@@ -108,6 +112,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     ICreateEventUseCase,
     CreateEventUseCase>();
+builder.Services.AddScoped<
+    Modules.Events.Policies.IEventCreationPolicy,
+    Modules.Events.Policies.EventCreationPolicy>();
 
 builder.Services.AddSingleton<
     IPasswordHasher,
@@ -212,6 +219,11 @@ builder.Services.AddScoped<
     CancelEventReservationFacade>();
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+builder.Services.AddScoped<IGetUserLimitsUseCase, GetUserLimitsUseCase>();
+builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+builder.Services.AddScoped<ILimitProvider, Application.Services.LimitProvider>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHostedService<Api.HostedServices.PlanLimitsStartupValidator>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
 builder.Services.AddHttpContextAccessor();
