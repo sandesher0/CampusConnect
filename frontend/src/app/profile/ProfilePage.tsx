@@ -3,10 +3,13 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePasswordValues } from "@/validations/auth";
 import { useAuthStore } from "@/stores/authStore";
 import { authService } from "@/services/authService";
+import { userService } from "@/services/userService";
+import { queryKeys } from "@/services/queryKeys";
 import Card from "@/components/common/Card";
 import Button from "@/components/common/Button";
 import Avatar from "@/components/common/Avatar";
@@ -26,6 +29,12 @@ export default function ProfilePage() {
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const { data: limitsData, isLoading: isLoadingLimits } = useQuery({
+    queryKey: queryKeys.auth.limits(),
+    queryFn: () => userService.getUserLimits(),
+    enabled: Boolean(user),
+  });
 
   const {
     register,
@@ -119,6 +128,11 @@ export default function ProfilePage() {
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary-tint text-primary-on-tint font-bold">
                 Student Account
               </span>
+              {limitsData && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-status-good-text border border-emerald-200 font-bold capitalize">
+                  {limitsData.planName}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -132,6 +146,67 @@ export default function ProfilePage() {
         >
           {isLoggingOut ? "Signing out..." : "Log out"}
         </Button>
+      </Card>
+
+      {/* Plan Limits Card */}
+      <Card className="p-6 sm:p-8 space-y-4" hoverEffect={false}>
+        <div className="flex items-center justify-between border-b border-border-divider pb-3">
+          <div>
+            <h3 className="text-lg font-[800] text-ink">Plan Usage & Limits</h3>
+            <p className="text-xs text-muted font-medium mt-0.5">
+              Current active plan: <strong className="text-ink">{limitsData?.planName || "Free Plan"}</strong>
+            </p>
+          </div>
+        </div>
+
+        {isLoadingLimits ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="h-20 bg-muted/10 animate-pulse rounded-[14px]" />
+            <div className="h-20 bg-muted/10 animate-pulse rounded-[14px]" />
+            <div className="h-20 bg-muted/10 animate-pulse rounded-[14px]" />
+          </div>
+        ) : limitsData ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            {/* Communities limit */}
+            <div className="p-4 rounded-[14px] bg-slate-50 border border-slate-200">
+              <p className="text-xs font-bold text-muted uppercase">Communities Created</p>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-2xl font-[800] text-ink">
+                  {limitsData.limits["communities.max_created"]?.currentUsage ?? 0}
+                </span>
+                <span className="text-xs font-semibold text-muted">
+                  / {limitsData.limits["communities.max_created"]?.isUnlimited ? "∞" : limitsData.limits["communities.max_created"]?.limit ?? 3}
+                </span>
+              </div>
+            </div>
+
+            {/* Active events limit */}
+            <div className="p-4 rounded-[14px] bg-slate-50 border border-slate-200">
+              <p className="text-xs font-bold text-muted uppercase">Active Events</p>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-2xl font-[800] text-ink">
+                  {limitsData.limits["events.max_active_created"]?.currentUsage ?? 0}
+                </span>
+                <span className="text-xs font-semibold text-muted">
+                  / {limitsData.limits["events.max_active_created"]?.isUnlimited ? "∞" : limitsData.limits["events.max_active_created"]?.limit ?? 5}
+                </span>
+              </div>
+            </div>
+
+            {/* Total events limit */}
+            <div className="p-4 rounded-[14px] bg-slate-50 border border-slate-200">
+              <p className="text-xs font-bold text-muted uppercase">Total Events Created</p>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-2xl font-[800] text-ink">
+                  {limitsData.limits["events.max_total_created"]?.currentUsage ?? 0}
+                </span>
+                <span className="text-xs font-semibold text-muted">
+                  / {limitsData.limits["events.max_total_created"]?.isUnlimited ? "∞" : limitsData.limits["events.max_total_created"]?.limit ?? 10}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </Card>
 
       {/* Account Details & Security Grid */}

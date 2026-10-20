@@ -15,12 +15,19 @@ export function toApiError(error: unknown): ApiError {
     let title: string | undefined;
     let detail: string | undefined;
     let fieldErrors: Record<string, string[]> | undefined;
+    let code: string | undefined;
+    let limitKey: string | undefined;
+    let limit: number | undefined;
 
     if (typeof data === "string" && data.trim()) {
       detail = data;
     } else if (data && typeof data === "object") {
-      title = (data as ProblemDetails).title;
-      detail = (data as ProblemDetails).detail;
+      const prob = data as ProblemDetails;
+      title = prob.title;
+      detail = prob.detail;
+      code = prob.code;
+      limitKey = prob.limitKey;
+      limit = prob.limit;
       fieldErrors = (data as ValidationProblemDetails).errors;
     }
 
@@ -31,7 +38,7 @@ export function toApiError(error: unknown): ApiError {
       axiosError.message ||
       "An unexpected error occurred.";
 
-    return new ApiError(status, message, title, detail, fieldErrors);
+    return new ApiError(status, message, title, detail, fieldErrors, code, limitKey, limit);
   }
 
   if (error instanceof Error) {
