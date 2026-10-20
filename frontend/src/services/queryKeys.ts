@@ -4,6 +4,7 @@ export const queryKeys = {
   // Auth & Current User
   auth: {
     me: () => ["auth", "me"] as const,
+    limits: () => ["user", "limits"] as const,
   },
 
   // Events

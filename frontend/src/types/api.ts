@@ -6,6 +6,9 @@ export interface ProblemDetails {
   status?: number;
   detail?: string;
   instance?: string;
+  code?: string;
+  limitKey?: string;
+  limit?: number;
 }
 
 export interface ValidationProblemDetails extends ProblemDetails {
@@ -17,14 +20,29 @@ export class ApiError extends Error {
   public readonly title?: string;
   public readonly detail?: string;
   public readonly fieldErrors?: Record<string, string[]>;
+  public readonly code?: string;
+  public readonly limitKey?: string;
+  public readonly limit?: number;
 
-  constructor(status: number, message: string, title?: string, detail?: string, fieldErrors?: Record<string, string[]>) {
+  constructor(
+    status: number,
+    message: string,
+    title?: string,
+    detail?: string,
+    fieldErrors?: Record<string, string[]>,
+    code?: string,
+    limitKey?: string,
+    limit?: number
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.title = title;
     this.detail = detail;
     this.fieldErrors = fieldErrors;
+    this.code = code;
+    this.limitKey = limitKey;
+    this.limit = limit;
   }
 
   public getFirstFieldError(): string | undefined {
