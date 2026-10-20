@@ -212,6 +212,10 @@ builder.Services.AddScoped<
     CancelEventReservationFacade>();
 
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+builder.Services.AddScoped<ILimitProvider, Application.Services.LimitProvider>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHostedService<Api.HostedServices.PlanLimitsStartupValidator>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
 builder.Services.AddHttpContextAccessor();

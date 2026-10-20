@@ -19,7 +19,9 @@ public class RegisterUserUseCaseTests
 {
     private readonly IAccountRegistrationFacade accountRegistrationFacade = Substitute.For<IAccountRegistrationFacade>();
     private readonly IUserRegistrationFacade userRegistrationFacade = Substitute.For<IUserRegistrationFacade>();
+    private readonly IPlanRepository planRepository = Substitute.For<IPlanRepository>();
     private readonly IPasswordHasher passwordHasher = Substitute.For<IPasswordHasher>();
+    private readonly TestTimeProvider timeProvider = new(new DateTimeOffset(2026, 10, 20, 8, 0, 0, TimeSpan.Zero));
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly RegisterUserUseCase sut;
 
@@ -28,7 +30,9 @@ public class RegisterUserUseCaseTests
         sut = new RegisterUserUseCase(
             accountRegistrationFacade,
             userRegistrationFacade,
+            planRepository,
             passwordHasher,
+            timeProvider,
             unitOfWork,
             NullLogger<RegisterUserUseCase>.Instance);
     }
@@ -45,6 +49,7 @@ public class RegisterUserUseCaseTests
 
         await passwordHasher.DidNotReceive().HashPassword(Arg.Any<string>());
         await accountRegistrationFacade.DidNotReceive().HandleAsync(Arg.Any<Account>(), Arg.Any<CancellationToken>());
+        await planRepository.DidNotReceive().AssignDefaultPlanToUserAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -59,11 +64,26 @@ public class RegisterUserUseCaseTests
 
         await Should.ThrowAsync<UsernameAlreadyTakenException>(() => sut.ExecuteAsync(registerRequest, ct));
 
+        await planRepository.DidNotReceive().AssignDefaultPlanToUserAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task ExecuteAsync_ValidRequest_RegistersUserHashesPasswordRegistersAccountAndSaves()
+    public async Task ExecuteAsync_WhenDefaultPlanNotFound_ThrowsInvalidOperationExceptionAndDoesNotSave()
+    {
+        var registerRequest = ApplicationTestData.CreateRegisterAccount();
+        var ct = new CancellationToken();
+        passwordHasher.HashPassword(registerRequest.Password).Returns("hashed_pass");
+        planRepository.AssignDefaultPlanToUserAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), ct)
+            .Returns(Task.FromException(new InvalidOperationException("Default plan is not configured in the system.")));
+
+        await Should.ThrowAsync<InvalidOperationException>(() => sut.ExecuteAsync(registerRequest, ct));
+
+        await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ValidRequest_RegistersUserHashesPasswordRegistersAccountAssignsDefaultPlanAndSaves()
     {
         var registerRequest = ApplicationTestData.CreateRegisterAccount();
         var ct = new CancellationToken();
@@ -84,6 +104,11 @@ public class RegisterUserUseCaseTests
             Arg.Is<Account>(a =>
                 a.Username == registerRequest.Username &&
                 a.PasswordHash == "hashed_secure_pass"),
+            ct);
+
+        await planRepository.Received(1).AssignDefaultPlanToUserAsync(
+            Arg.Any<Guid>(),
+            timeProvider.GetUtcNow(),
             ct);
 
         await unitOfWork.Received(1).SaveChangesAsync(ct);
