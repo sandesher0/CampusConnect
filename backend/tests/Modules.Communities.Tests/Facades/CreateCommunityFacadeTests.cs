@@ -2,7 +2,6 @@
 namespace Modules.Communities.Tests.Facades;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Modules.Communities.Domain;
 using Modules.Communities.Facades;
 using Modules.Communities.Policies;
 using Modules.Communities.Ports;
@@ -26,6 +25,15 @@ public class CreateCommunityFacadeTests
 
     public CreateCommunityFacadeTests()
     {
+        unitOfWork
+            .ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var operation = callInfo.Arg<Func<CancellationToken, Task>>();
+                var cancellationToken = callInfo.Arg<CancellationToken>();
+                return operation(cancellationToken);
+            });
+
         communityCreationPolicy.EvaluateAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(PolicyResult.Success());
 
@@ -42,6 +50,7 @@ public class CreateCommunityFacadeTests
     {
         var community = CommunityTestData.CreateCommunity();
         var ct = new CancellationToken();
+
         communityCreationPolicy.EvaluateAsync(community.CreatedBy, ct)
             .Returns(PolicyResult.Failure("Limit reached", LimitKeys.CommunitiesMaxCreated, 3));
 
@@ -49,8 +58,38 @@ public class CreateCommunityFacadeTests
 
         ex.LimitKey.ShouldBe(LimitKeys.CommunitiesMaxCreated);
         ex.Limit.ShouldBe(3);
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct);
         await communityRepository.DidNotReceive().AddAsync(Arg.Any<CommunityEntity>(), Arg.Any<CancellationToken>());
+        await communityMemberRepository.DidNotReceive().AddAsync(Arg.Any<CommunityMemberEntity>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidCommunity_AcquiresLockBeforeEvaluatingPolicy()
+    {
+        var community = CommunityTestData.CreateCommunity();
+        var ct = new CancellationToken();
+        var callOrder = new List<string>();
+
+        unitOfWork
+            .AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct)
+            .Returns(_ =>
+            {
+                callOrder.Add("lock");
+                return Task.CompletedTask;
+            });
+
+        communityCreationPolicy
+            .EvaluateAsync(community.CreatedBy, ct)
+            .Returns(_ =>
+            {
+                callOrder.Add("policy");
+                return PolicyResult.Success();
+            });
+
+        await sut.HandleAsync(community, ct);
+
+        callOrder.ShouldBe(new[] { "lock", "policy" });
     }
 
     [Fact]
@@ -61,6 +100,7 @@ public class CreateCommunityFacadeTests
 
         await sut.HandleAsync(community, ct);
 
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct);
         await communityRepository.Received(1).AddAsync(
             Arg.Is<CommunityEntity>(c =>
                 c.CommunityName == community.CommunityName &&
