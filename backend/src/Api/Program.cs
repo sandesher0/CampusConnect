@@ -221,6 +221,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
 builder.Services.AddScoped<IGetUserLimitsUseCase, GetUserLimitsUseCase>();
 builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+builder.Services.AddScoped<IGetUserPlanLimitFacade, GetUserPlanLimitFacade>();
+builder.Services.AddScoped<IUserPlanRepository, UserPlanRepository>();
+builder.Services.AddScoped<IPlanLimitRepository, PlanLimitRepository>();
 builder.Services.AddScoped<ILimitProvider, Application.Services.LimitProvider>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<Api.HostedServices.PlanLimitsStartupValidator>();

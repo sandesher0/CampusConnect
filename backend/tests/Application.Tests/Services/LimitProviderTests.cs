@@ -79,7 +79,7 @@ public class LimitProviderTests
         var paidLimits = new List<PlanLimit>
         {
             new() { Id = Guid.NewGuid(), PlanId = paidPlanId, LimitKey = LimitKeys.CommunitiesMaxCreated, Value = 20 },
-            new() { Id = Guid.NewGuid(), PlanId = paidPlanId, LimitKey = LimitKeys.EventsMaxCapacity, Value = null } // Unlimited
+            new() { Id = Guid.NewGuid(), PlanId = paidPlanId, LimitKey = LimitKeys.EventsMaxCapacity, Value = 20 }
         };
 
         planRepository.GetActiveUserPlanAsync(userId, timeProvider.GetUtcNow(), ct)
@@ -91,7 +91,8 @@ public class LimitProviderTests
         var capLimit = await sut.GetLimitAsync(userId, LimitKeys.EventsMaxCapacity, ct);
 
         commLimit.Value.ShouldBe(20);
-        capLimit.IsUnlimited.ShouldBeTrue();
+        capLimit.Value.ShouldBe(20);
+        capLimit.IsUnlimited.ShouldBeFalse();
     }
 
     [Fact]

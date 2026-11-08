@@ -198,9 +198,14 @@ public class JoinEventUseCaseTests
         checkCommunityMembershipFacade.HandleAsync(userId, communityId, ct)
             .Returns(new CommunityMember { CommunityId = communityId, UserId = userId, MemberType = SharedKernel.Constants.MemberType.ClubMember });
         checkEventReservationStatusFacade.HandleAsync(eventId, userId, ct).Returns(false);
+        unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), ct)
+            .Returns(callInfo =>
+                callInfo.Arg<Func<CancellationToken, Task>>()(ct));
 
         await sut.HandleAsync(accountId, eventId, communityId, ct);
 
+        await unitOfWork.Received(1)
+            .ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), ct);
         await createEventReservationFacade.Received(1).HandleAsync(
             Arg.Is<EventReservation>(r =>
                 r.EventId == eventId &&

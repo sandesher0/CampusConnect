@@ -14,12 +14,14 @@ using Xunit;
 public class CreateEventReservationFacadeTests
 {
     private readonly IEventReservationRepository eventReservationRepository = Substitute.For<IEventReservationRepository>();
+    private readonly IEventRepository eventRepository = Substitute.For<IEventRepository>();
     private readonly CreateEventReservationFacade sut;
 
     public CreateEventReservationFacadeTests()
     {
         sut = new CreateEventReservationFacade(
             eventReservationRepository,
+            eventRepository,
             NullLogger<CreateEventReservationFacade>.Instance);
     }
 
@@ -28,9 +30,12 @@ public class CreateEventReservationFacadeTests
     {
         var reservation = EventTestData.CreateEventReservation();
         var ct = new CancellationToken();
+        eventRepository.TryReserveCapacityAsync(reservation.EventId, ct)
+            .Returns(true);
 
         await sut.HandleAsync(reservation, ct);
 
+        await eventRepository.Received(1).TryReserveCapacityAsync(reservation.EventId, ct);
         await eventReservationRepository.Received(1).AddAsync(
             Arg.Is<EventReservationEntity>(e =>
                 e.EventId == reservation.EventId &&

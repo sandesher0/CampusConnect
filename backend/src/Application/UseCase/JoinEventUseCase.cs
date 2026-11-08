@@ -91,8 +91,11 @@ public class JoinEventUseCase : IJoinEventUseCase
             UserId = userId.Value
         };
 
-        await createEventReservationFacade.HandleAsync(eventReservation, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.ExecuteInTransactionAsync(async ct =>
+        {
+            await createEventReservationFacade.HandleAsync(eventReservation, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
 
         logger.LogInformation(
             "User joined event. UserId={UserId}, EventId={EventId}, CommunityId={CommunityId}",

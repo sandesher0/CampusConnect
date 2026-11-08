@@ -30,7 +30,9 @@ public static class EventTestData
             Visibility = visibility,
             Category = category,
             CommunityId = communityId ?? DefaultCommunityId,
-            CreatedBy = createdBy ?? DefaultUserId
+            CreatedBy = createdBy ?? DefaultUserId,
+            Capacity = 200,
+            ReservedCount = 0
         };
 
     public static EventEntity CreateEventEntity(
@@ -52,6 +54,8 @@ public static class EventTestData
             Category = category,
             CommunityId = communityId ?? DefaultCommunityId,
             CreatedBy = createdBy ?? DefaultUserId,
+            Capacity = 200,
+            ReservedCount = 0,
             CreateAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
             User = new UserEntity
             {

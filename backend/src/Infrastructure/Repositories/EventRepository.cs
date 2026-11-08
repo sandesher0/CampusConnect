@@ -52,4 +52,13 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
             .Where(e => e.CreatedBy == userId && e.DeletedAt == null && e.EventEndDate > now)
             .CountAsync(cancellationToken);
     }
+    public async Task<bool> TryReserveCapacityAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        var effectedRows = await dbSet.Where(e => e.Id == eventId && e.ReservedCount < e.Capacity)
+                            .ExecuteUpdateAsync(
+                                setters => setters.SetProperty(
+                                    e => e.ReservedCount, e => e.ReservedCount + 1),
+                                     cancellationToken);
+        return effectedRows > 0;
+    }
 }
