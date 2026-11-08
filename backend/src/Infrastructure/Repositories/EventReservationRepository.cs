@@ -31,6 +31,21 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
             .SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<bool> TryCancelActiveReservationAsync(Guid eventId, Guid userId, DateTimeOffset cancelledAt, CancellationToken cancellationToken)
+    {
+        var affectedRows = await dbSet
+            .Where(r => r.EventId == eventId &&
+                        r.UserId == userId &&
+                        r.DeletedAt == null)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(r => r.DeletedAt, cancelledAt)
+                    .SetProperty(r => r.ModifiedAt, cancelledAt),
+                cancellationToken);
+
+        return affectedRows > 0;
+    }
+
     public async Task<PagedResult<EventReservationEntity>> GetByEventIdAsync(Guid eventId, PageRequest page, CancellationToken cancellationToken)
     {
         return await dbSet

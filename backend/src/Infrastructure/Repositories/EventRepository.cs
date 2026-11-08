@@ -61,4 +61,14 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
                                      cancellationToken);
         return effectedRows > 0;
     }
+    public async Task<bool> TryFreeCapacityAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        var effectedRows = await dbSet.Where(e => e.Id == eventId && e.ReservedCount > 0)
+                            .ExecuteUpdateAsync(
+                                setters => setters.SetProperty(
+                                    e => e.ReservedCount, e => e.ReservedCount - 1),
+                                     cancellationToken);
+        return effectedRows > 0;
+    }
+
 }

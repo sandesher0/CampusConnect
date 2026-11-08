@@ -8,6 +8,7 @@ public interface IEventReservationRepository : IBaseRepository<EventReservationE
 {
     Task<EventReservationEntity?> CheckEventReservation(Guid eventId, Guid UserId, CancellationToken cancellationToken);
     Task<EventReservationEntity?> GetActiveReservationAsync(Guid eventId, Guid userId, CancellationToken cancellationToken);
+    Task<bool> TryCancelActiveReservationAsync(Guid eventId, Guid userId, DateTimeOffset cancelledAt, CancellationToken cancellationToken);
     Task<PagedResult<EventReservationEntity>> GetByEventIdAsync(Guid eventId, PageRequest page, CancellationToken cancellationToken);
     Task<PagedResult<EventReservationEntity>> GetByUserIdAsync(Guid userId, PageRequest page, CancellationToken cancellationToken);
 }
