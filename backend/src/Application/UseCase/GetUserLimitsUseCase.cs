@@ -77,6 +77,7 @@ public class GetUserLimitsUseCase : IGetUserLimitsUseCase
                 LimitKeys.CommunitiesMaxCreated => communitiesCount,
                 LimitKeys.EventsMaxTotalCreated => eventsTotalCount,
                 LimitKeys.EventsMaxActiveCreated => eventsActiveCount,
+                LimitKeys.CommunityMaxMember => null,
                 _ => null
             };
 

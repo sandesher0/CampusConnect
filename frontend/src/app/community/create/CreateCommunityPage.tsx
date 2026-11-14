@@ -135,6 +135,10 @@ export default function CreateCommunityPage() {
             </Select>
           </Field>
 
+          <p className="text-sm text-muted">
+            Member capacity is assigned automatically from your current plan.
+          </p>
+
           {/* Buttons */}
           <div className="pt-4 border-t border-border-divider flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
             <Button href="/community" variant="outline" className="w-full sm:w-auto">

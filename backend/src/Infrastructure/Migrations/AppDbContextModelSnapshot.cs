@@ -29,6 +29,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Category")
                         .HasColumnType("integer");
 
@@ -57,6 +60,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("ReservedCount")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -134,6 +140,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("CommunityName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("MaximumMembers")
+                        .HasColumnType("integer");
 
                     b.Property<int>("CommunityType")
                         .HasColumnType("integer");
@@ -278,7 +287,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("Value")
+                    b.Property<int>("Value")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");

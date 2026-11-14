@@ -37,7 +37,8 @@ public class PlanLimitsStartupValidator : IHostedService
             LimitKeys.EventsMaxTotalCreated,
             LimitKeys.EventsMaxActiveCreated,
             LimitKeys.CommunitiesMaxCreated,
-            LimitKeys.EventsMaxCapacity
+            LimitKeys.EventsMaxCapacity,
+            LimitKeys.CommunityMaxMember
         ];
 
         foreach (var key in requiredKeys)

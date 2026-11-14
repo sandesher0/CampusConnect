@@ -15,6 +15,8 @@ using Xunit;
 
 public class JoinPublicCommunityUseCaseTests
 {
+    private const string JoinLockScope = "Communities.Join";
+
     private readonly IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade = Substitute.For<IGetUserIdByAccountIdFacade>();
     private readonly ICommunityMembershipEligibilityFacade eligibilityFacade = Substitute.For<ICommunityMembershipEligibilityFacade>();
     private readonly IJoinPublicCommunityFacade joinCommunityFacade = Substitute.For<IJoinPublicCommunityFacade>();
@@ -23,6 +25,15 @@ public class JoinPublicCommunityUseCaseTests
 
     public JoinPublicCommunityUseCaseTests()
     {
+        unitOfWork
+            .ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var operation = callInfo.Arg<Func<CancellationToken, Task>>();
+                var cancellationToken = callInfo.Arg<CancellationToken>();
+                return operation(cancellationToken);
+            });
+
         sut = new JoinPublicCommunityUseCase(
             joinCommunityFacade,
             eligibilityFacade,
@@ -46,6 +57,7 @@ public class JoinPublicCommunityUseCaseTests
             .HandleAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await joinCommunityFacade.DidNotReceive()
             .HandleAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await unitOfWork.DidNotReceive().ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -62,6 +74,7 @@ public class JoinPublicCommunityUseCaseTests
 
         await Should.ThrowAsync<InvalidOperationException>(() => sut.HandleAsync(accountId, communityId, ct));
 
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync(JoinLockScope, communityId, ct);
         await joinCommunityFacade.DidNotReceive()
             .HandleAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -78,6 +91,7 @@ public class JoinPublicCommunityUseCaseTests
 
         await sut.HandleAsync(accountId, communityId, ct);
 
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync(JoinLockScope, communityId, ct);
         await eligibilityFacade.Received(1).HandleAsync(communityId, userId, ct);
         await joinCommunityFacade.Received(1).HandleAsync(communityId, userId, ct);
         await unitOfWork.Received(1).SaveChangesAsync(ct);

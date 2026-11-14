@@ -126,6 +126,11 @@ function CommunityDetailContent() {
             <p className="mt-2 text-xs font-semibold text-muted">
               Official student organization on CampusConnect
             </p>
+            <p className="mt-3 text-sm font-semibold text-muted">
+              Members: <span className="text-ink">{community.communityMembers?.totalCount ?? 0}</span>
+              {" / "}
+              <span className="text-ink">{community.maximumMembers}</span>
+            </p>
           </div>
 
           <div>

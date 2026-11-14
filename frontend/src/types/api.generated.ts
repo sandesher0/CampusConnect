@@ -1231,6 +1231,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             communityName: string;
+            maximumMembers: number;
             communityType: components["schemas"]["CommunityType"];
             /** Format: uuid */
             createdBy: string;
@@ -1240,6 +1241,7 @@ export interface components {
             /** Format: uuid */
             communityId: string;
             communityName: string;
+            maximumMembers: number;
             communityType: components["schemas"]["CommunityType"];
             /** Format: uuid */
             createdBy: string;

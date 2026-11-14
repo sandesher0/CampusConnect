@@ -47,6 +47,7 @@ public class JoinPublicCommunityFacade : IJoinPublicCommunityFacade
             throw new CommunityNotFoundException(communityId);
         }
 
+
         var communityMember = new CommunityMember
         {
             CommunityId = communityId,

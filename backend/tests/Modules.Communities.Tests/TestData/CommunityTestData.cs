@@ -14,6 +14,7 @@ public static class CommunityTestData
     public static Community CreateCommunity(
         Guid? id = null,
         string name = "Computer Science Club",
+        int maximumMembers = 100,
         CommunityType type = CommunityType.Public,
         Guid? createdBy = null,
         CommunityStatusType status = CommunityStatusType.Active) =>
@@ -21,6 +22,7 @@ public static class CommunityTestData
         {
             Id = id ?? DefaultCommunityId,
             CommunityName = name,
+            MaximumMembers = maximumMembers,
             CommunityType = type,
             CreatedBy = createdBy ?? DefaultUserId,
             Status = status
@@ -29,6 +31,7 @@ public static class CommunityTestData
     public static CommunityEntity CreateCommunityEntity(
         Guid? id = null,
         string name = "Computer Science Club",
+        int maximumMembers = 100,
         CommunityType type = CommunityType.Public,
         Guid? createdBy = null,
         CommunityStatusType status = CommunityStatusType.Active) =>
@@ -36,6 +39,7 @@ public static class CommunityTestData
         {
             Id = id ?? DefaultCommunityId,
             CommunityName = name,
+            MaximumMembers = maximumMembers,
             CommunityType = type,
             CreatedBy = createdBy ?? DefaultUserId,
             Status = status,

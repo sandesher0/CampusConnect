@@ -28,6 +28,7 @@ public class LimitProviderTests
     private readonly List<PlanLimit> defaultPlanLimits =
     [
         new() { Id = Guid.NewGuid(), PlanId = Guid.Parse("11111111-1111-1111-1111-111111111111"), LimitKey = LimitKeys.CommunitiesMaxCreated, Value = 3 },
+        new() { Id = Guid.NewGuid(), PlanId = Guid.Parse("11111111-1111-1111-1111-111111111111"), LimitKey = LimitKeys.CommunityMaxMember, Value = 100 },
         new() { Id = Guid.NewGuid(), PlanId = Guid.Parse("11111111-1111-1111-1111-111111111111"), LimitKey = LimitKeys.EventsMaxActiveCreated, Value = 5 },
         new() { Id = Guid.NewGuid(), PlanId = Guid.Parse("11111111-1111-1111-1111-111111111111"), LimitKey = LimitKeys.EventsMaxTotalCreated, Value = 10 },
         new() { Id = Guid.NewGuid(), PlanId = Guid.Parse("11111111-1111-1111-1111-111111111111"), LimitKey = LimitKeys.EventsMaxCapacity, Value = 200 }

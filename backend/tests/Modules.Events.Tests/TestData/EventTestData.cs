@@ -71,6 +71,7 @@ public static class EventTestData
             {
                 Id = communityId ?? DefaultCommunityId,
                 CommunityName = "Engineering Society",
+                MaximumMembers = 100,
                 CommunityType = CommunityType.Public,
                 CreatedBy = createdBy ?? DefaultUserId,
                 CreatedAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),

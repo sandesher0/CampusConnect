@@ -42,5 +42,12 @@ public class CommunityMemberRepository : BaseRepository<AppDbContext, CommunityM
             .ToPagedAsync(page, cancellationToken);
     }
 
+    public Task<int> CountByCommunityIdAsync(Guid communityId, CancellationToken cancellationToken)
+    {
+        return dbSet
+            .AsNoTracking()
+            .Where(x => x.CommunityId == communityId && x.DeletedAt == null)
+            .CountAsync(cancellationToken);
+    }
 
 }

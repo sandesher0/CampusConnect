@@ -9,6 +9,7 @@ public class CommunityEntity
     [Key]
     public required Guid Id { get; set; }
     public required string CommunityName { get; set; }
+    public required int MaximumMembers { get; set; }
     public required CommunityType CommunityType { get; set; }
     public required Guid CreatedBy { get; set; }
     public required CommunityStatusType Status { get; set; }

@@ -11,6 +11,7 @@ public static class CommunityEntityToDomain
         {
             Id = entity.Id,
             CommunityName = entity.CommunityName,
+            MaximumMembers = entity.MaximumMembers,
             CommunityType = entity.CommunityType,
             CreatedBy = entity.CreatedBy,
             Status = entity.Status

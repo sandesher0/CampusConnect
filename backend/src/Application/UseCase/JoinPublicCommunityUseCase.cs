@@ -10,6 +10,8 @@ namespace Application.UseCase;
 
 public class JoinPublicCommunityUseCase : IJoinPublicCommunityUseCase
 {
+    private const string JoinLockScope = "Communities.Join";
+
     private readonly IJoinPublicCommunityFacade joinPublicCommunityFacade;
     private readonly ICommunityMembershipEligibilityFacade communityMembershipEligibilityFacade;
     private readonly IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade;
@@ -58,22 +60,27 @@ public class JoinPublicCommunityUseCase : IJoinPublicCommunityUseCase
             accountId,
             userId.Value);
 
-        await communityMembershipEligibilityFacade.HandleAsync(
-            communityId,
-            userId.Value,
-            cancellationToken);
+        await unitOfWork.ExecuteInTransactionAsync(async ct =>
+        {
+            await unitOfWork.AcquireAdvisoryLockAsync(JoinLockScope, communityId, ct);
 
-        logger.LogDebug(
-            "User {UserId} is eligible to join community {CommunityId}",
-            userId.Value,
-            communityId);
+            await communityMembershipEligibilityFacade.HandleAsync(
+                communityId,
+                userId.Value,
+                ct);
 
-        await joinPublicCommunityFacade.HandleAsync(
-            communityId,
-            userId.Value,
-            cancellationToken);
+            logger.LogDebug(
+                "User {UserId} is eligible to join community {CommunityId}",
+                userId.Value,
+                communityId);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+            await joinPublicCommunityFacade.HandleAsync(
+                communityId,
+                userId.Value,
+                ct);
+
+            await unitOfWork.SaveChangesAsync(ct);
+        }, cancellationToken);
 
         logger.LogInformation(
             "User {UserId} successfully joined community {CommunityId}",

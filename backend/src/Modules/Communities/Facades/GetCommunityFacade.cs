@@ -57,6 +57,7 @@ public class GetCommunityFacade : IGetCommunityFacade
         {
             CommunityId = community.Id,
             CommunityName = community.CommunityName,
+            MaximumMembers = community.MaximumMembers,
             CommunityType = community.CommunityType,
             CreatedBy = community.CreatedBy,
             CommunityMembers = pagedMembers.Map(member => new CommunityMemberResponse

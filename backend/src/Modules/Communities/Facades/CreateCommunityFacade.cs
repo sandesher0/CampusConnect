@@ -16,6 +16,7 @@ public class CreateCommunityFacade : ICreateCommunityFacade
     private readonly ICommunityRepository repository;
     private readonly ICommunityMemberRepository communityMemberRepository;
     private readonly ICommunityCreationPolicy communityCreationPolicy;
+    private readonly ILimitProvider limitProvider;
     private readonly ILogger<CreateCommunityFacade> logger;
     private readonly IUnitOfWork unitOfWork;
 
@@ -23,12 +24,14 @@ public class CreateCommunityFacade : ICreateCommunityFacade
         ICommunityRepository repository,
         ICommunityMemberRepository communityMemberRepository,
         ICommunityCreationPolicy communityCreationPolicy,
+        ILimitProvider limitProvider,
         ILogger<CreateCommunityFacade> logger,
         IUnitOfWork unitOfWork)
     {
         this.repository = repository;
         this.communityMemberRepository = communityMemberRepository;
         this.communityCreationPolicy = communityCreationPolicy;
+        this.limitProvider = limitProvider;
         this.logger = logger;
         this.unitOfWork = unitOfWork;
     }
@@ -50,6 +53,18 @@ public class CreateCommunityFacade : ICreateCommunityFacade
             {
                 throw new PlanLimitExceededException(policyResult.LimitKey!, policyResult.Limit!.Value);
             }
+
+            var memberLimit = await limitProvider.GetLimitAsync(
+                community.CreatedBy,
+                LimitKeys.CommunityMaxMember,
+                ct);
+            if (memberLimit.Value is null)
+            {
+                throw new InvalidOperationException(
+                    $"Configuration error: Limit key '{LimitKeys.CommunityMaxMember}' must have a numeric value.");
+            }
+
+            community.MaximumMembers = memberLimit.Value.Value;
 
             // 3. Stage Community and Owner Member entities
             var communityEntity = CommunityDomainToEntityMapper.ToEntity(community);

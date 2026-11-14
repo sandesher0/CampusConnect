@@ -20,6 +20,7 @@ public class CreateCommunityFacadeTests
     private readonly ICommunityRepository communityRepository = Substitute.For<ICommunityRepository>();
     private readonly ICommunityMemberRepository communityMemberRepository = Substitute.For<ICommunityMemberRepository>();
     private readonly ICommunityCreationPolicy communityCreationPolicy = Substitute.For<ICommunityCreationPolicy>();
+    private readonly ILimitProvider limitProvider = Substitute.For<ILimitProvider>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly CreateCommunityFacade sut;
 
@@ -37,10 +38,14 @@ public class CreateCommunityFacadeTests
         communityCreationPolicy.EvaluateAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(PolicyResult.Success());
 
+        limitProvider.GetLimitAsync(Arg.Any<Guid>(), LimitKeys.CommunityMaxMember, Arg.Any<CancellationToken>())
+            .Returns(new Limit(100));
+
         sut = new CreateCommunityFacade(
             communityRepository,
             communityMemberRepository,
             communityCreationPolicy,
+            limitProvider,
             NullLogger<CreateCommunityFacade>.Instance,
             unitOfWork);
     }
@@ -48,7 +53,7 @@ public class CreateCommunityFacadeTests
     [Fact]
     public async Task HandleAsync_WhenPolicyFails_ThrowsPlanLimitExceededExceptionAndDoesNotSave()
     {
-        var community = CommunityTestData.CreateCommunity();
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
         var ct = new CancellationToken();
 
         communityCreationPolicy.EvaluateAsync(community.CreatedBy, ct)
@@ -67,7 +72,7 @@ public class CreateCommunityFacadeTests
     [Fact]
     public async Task HandleAsync_ValidCommunity_AcquiresLockBeforeEvaluatingPolicy()
     {
-        var community = CommunityTestData.CreateCommunity();
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
         var ct = new CancellationToken();
         var callOrder = new List<string>();
 
@@ -95,7 +100,7 @@ public class CreateCommunityFacadeTests
     [Fact]
     public async Task HandleAsync_ValidCommunity_AddsCommunityAndOfficerMemberAndSaves()
     {
-        var community = CommunityTestData.CreateCommunity();
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
         var ct = new CancellationToken();
 
         await sut.HandleAsync(community, ct);
@@ -104,6 +109,7 @@ public class CreateCommunityFacadeTests
         await communityRepository.Received(1).AddAsync(
             Arg.Is<CommunityEntity>(c =>
                 c.CommunityName == community.CommunityName &&
+                c.MaximumMembers == 100 &&
                 c.CommunityType == community.CommunityType &&
                 c.CreatedBy == community.CreatedBy &&
                 c.Status == CommunityStatusType.Active),
