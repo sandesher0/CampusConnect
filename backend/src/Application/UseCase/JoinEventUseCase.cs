@@ -11,6 +11,8 @@ namespace Application.UseCase;
 
 public class JoinEventUseCase : IJoinEventUseCase
 {
+    private const string ReservationLockScope = "Events.Reservations";
+
     private readonly IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade;
     private readonly IGetEventFacade getEventFacade;
     private readonly ICheckCommunityMembershipFacade checkCommunityMembershipFacade;
@@ -93,8 +95,9 @@ public class JoinEventUseCase : IJoinEventUseCase
 
         await unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
-            await createEventReservationFacade.HandleAsync(eventReservation, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
+            await createEventReservationFacade.HandleAsync(eventReservation, ct);
+            await unitOfWork.SaveChangesAsync(ct);
         }, cancellationToken);
 
         logger.LogInformation(

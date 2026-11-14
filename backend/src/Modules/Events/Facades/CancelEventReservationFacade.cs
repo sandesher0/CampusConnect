@@ -7,6 +7,8 @@ namespace Modules.Events.Facades;
 
 public class CancelEventReservationFacade : ICancelEventReservationFacade
 {
+    private const string ReservationLockScope = "Events.Reservations";
+
     private readonly IEventReservationRepository eventReservationRepository;
     private readonly IEventRepository eventRepository;
     private readonly IUnitOfWork unitOfWork;
@@ -31,18 +33,22 @@ public class CancelEventReservationFacade : ICancelEventReservationFacade
 
         await unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
+            await unitOfWork.AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
+
             var reservationCancelled = await eventReservationRepository.TryCancelActiveReservationAsync(
                 eventId,
                 userId,
                 cancelledAt,
-                cancellationToken);
+                ct);
             if (!reservationCancelled)
             {
                 logger.LogWarning("Reservation not found for cancellation: EventId={EventId}, UserId={UserId}", eventId, userId);
                 throw new ReservationNotFoundException(eventId, userId);
             }
 
-            var seatFreed = await eventRepository.TryFreeCapacityAsync(eventId, cancellationToken);
+            var activeReservations = await eventReservationRepository.CountActiveByEventIdAsync(eventId, ct);
+
+            var seatFreed = await eventRepository.TryFreeCapacityAsync(eventId, activeReservations, ct);
             if (!seatFreed)
             {
                 logger.LogError(
@@ -50,7 +56,7 @@ public class CancelEventReservationFacade : ICancelEventReservationFacade
                     eventId, userId);
                 throw new ConflictException($"Failed to free the reserved seat for this event: {eventId}.");
             }
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await unitOfWork.SaveChangesAsync(ct);
         }, cancellationToken);
 
         logger.LogInformation("Reservation cancelled successfully: EventId={EventId}, UserId={UserId}",

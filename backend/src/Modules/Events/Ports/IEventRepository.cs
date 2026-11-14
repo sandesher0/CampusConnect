@@ -13,6 +13,6 @@ public interface IEventRepository : IBaseRepository<EventEntity>
     Task<EventEntity?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken);
     Task<int> CountTotalCreatedByUserAsync(Guid userId, CancellationToken cancellationToken);
     Task<int> CountActiveCreatedByUserAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken);
-    Task<bool> TryReserveCapacityAsync(Guid eventId,CancellationToken cancellationToken);
-    Task<bool> TryFreeCapacityAsync(Guid eventId,CancellationToken cancellationToken);
+    Task<bool> TryReserveCapacityAsync(Guid eventId, int activeReservations, CancellationToken cancellationToken);
+    Task<bool> TryFreeCapacityAsync(Guid eventId, int activeReservations, CancellationToken cancellationToken);
 }

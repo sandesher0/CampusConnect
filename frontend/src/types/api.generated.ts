@@ -1289,6 +1289,8 @@ export interface components {
             communityId: string;
             /** Format: uuid */
             createdBy: string;
+            capacity: number;
+            reservedCount: number;
             /** Format: date-time */
             eventDate: string;
             /** Format: date-time */

@@ -25,9 +25,13 @@ public class CreateEventReservationFacade : ICreateEventReservationFacade
 
     public async Task HandleAsync(EventReservation domain, CancellationToken cancellationToken)
     {
+        var activeReservations = await eventReservationRepository
+            .CountActiveByEventIdAsync(domain.EventId, cancellationToken);
+
         var isSuccess = await eventRepository.TryReserveCapacityAsync(
-    domain.EventId,
-    cancellationToken);
+            domain.EventId,
+            activeReservations,
+            cancellationToken);
 
         if (!isSuccess)
         {

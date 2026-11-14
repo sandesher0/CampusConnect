@@ -31,6 +31,13 @@ public class EventReservationRepository : BaseRepository<AppDbContext, EventRese
             .SingleOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<int> CountActiveByEventIdAsync(Guid eventId, CancellationToken cancellationToken)
+    {
+        return await dbSet
+            .AsNoTracking()
+            .CountAsync(r => r.EventId == eventId && r.DeletedAt == null, cancellationToken);
+    }
+
     public async Task<bool> TryCancelActiveReservationAsync(Guid eventId, Guid userId, DateTimeOffset cancelledAt, CancellationToken cancellationToken)
     {
         var affectedRows = await dbSet

@@ -16,6 +16,8 @@ public static class EventEntityToDetailResponse
             Location = eventEntity.Location,
             CommunityId = eventEntity.CommunityId,
             CreatedBy = eventEntity.CreatedBy,
+            Capacity = eventEntity.Capacity,
+            ReservedCount = eventEntity.ReservedCount,
             EventDate = eventEntity.EventDate,
             EventEndDate = eventEntity.EventEndDate,
             Visibility = eventEntity.Visibility,

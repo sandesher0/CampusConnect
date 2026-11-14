@@ -140,6 +140,8 @@ function EventDetailContent() {
   const now = new Date();
   const isHappeningNow =
     new Date(event.eventDate) <= now && new Date(event.eventEndDate) >= now;
+  const remainingSeats = Math.max(event.capacity - event.reservedCount, 0);
+  const isFull = remainingSeats === 0;
 
   const reservations = reservationsData?.items ?? [];
   const totalReservationPages = reservationsData?.totalPages ?? 1;
@@ -196,7 +198,7 @@ function EventDetailContent() {
             </p>
 
             {/* When & Where Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8 p-6 rounded-[18px] bg-page border border-border-card text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-8 p-6 rounded-[18px] bg-page border border-border-card text-sm">
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-wider text-muted">WHEN</p>
                 <p className="mt-1 font-bold text-ink">
@@ -215,6 +217,16 @@ function EventDetailContent() {
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-wider text-muted">WHERE</p>
                 <p className="mt-1 font-bold text-ink">{event.location}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-muted">SEATS</p>
+                <p className="mt-1 font-bold text-ink">
+                  {event.reservedCount} / {event.capacity} reserved
+                </p>
+                <p className="text-xs text-muted font-medium mt-0.5">
+                  {remainingSeats} seat{remainingSeats === 1 ? "" : "s"} remaining
+                </p>
               </div>
             </div>
 
@@ -330,12 +342,16 @@ function EventDetailContent() {
                   variant="primary"
                   className="w-full"
                   size="lg"
-                  disabled={joinMutation.isPending}
+                  disabled={joinMutation.isPending || isFull}
                   loading={joinMutation.isPending}
                   onClick={() => joinMutation.mutate()}
                   aria-busy={joinMutation.isPending}
                 >
-                  {joinMutation.isPending ? "Reserving Spot..." : "Reserve My Spot"}
+                  {joinMutation.isPending
+                    ? "Reserving Spot..."
+                    : isFull
+                      ? "Event Full"
+                      : "Reserve My Spot"}
                 </Button>
               )
             ) : (

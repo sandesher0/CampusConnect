@@ -12,6 +12,8 @@ using Xunit;
 
 public class CancelEventReservationFacadeTests
 {
+    private const string ReservationLockScope = "Events.Reservations";
+
     private readonly IEventReservationRepository eventReservationRepository = Substitute.For<IEventReservationRepository>();
     private readonly IEventRepository eventRepository = Substitute.For<IEventRepository>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
@@ -50,7 +52,8 @@ public class CancelEventReservationFacadeTests
 
         ex.Message.ShouldContain(eventId.ToString());
         ex.Message.ShouldContain(userId.ToString());
-        await eventRepository.DidNotReceive().TryFreeCapacityAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
+        await eventRepository.DidNotReceive().TryFreeCapacityAsync(Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -64,13 +67,16 @@ public class CancelEventReservationFacadeTests
         eventReservationRepository
             .TryCancelActiveReservationAsync(eventId, userId, Arg.Any<DateTimeOffset>(), ct)
             .Returns(true);
-        eventRepository.TryFreeCapacityAsync(eventId, ct).Returns(true);
+        eventReservationRepository.CountActiveByEventIdAsync(eventId, ct).Returns(3);
+        eventRepository.TryFreeCapacityAsync(eventId, 3, ct).Returns(true);
 
         await sut.HandleAsync(eventId, userId, ct);
 
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
         await eventReservationRepository.Received(1)
             .TryCancelActiveReservationAsync(eventId, userId, Arg.Any<DateTimeOffset>(), ct);
-        await eventRepository.Received(1).TryFreeCapacityAsync(eventId, ct);
+        await eventReservationRepository.Received(1).CountActiveByEventIdAsync(eventId, ct);
+        await eventRepository.Received(1).TryFreeCapacityAsync(eventId, 3, ct);
         await unitOfWork.Received(1).SaveChangesAsync(ct);
     }
 
@@ -84,13 +90,16 @@ public class CancelEventReservationFacadeTests
         eventReservationRepository
             .TryCancelActiveReservationAsync(eventId, userId, Arg.Any<DateTimeOffset>(), ct)
             .Returns(true);
-        eventRepository.TryFreeCapacityAsync(eventId, ct).Returns(false);
+        eventReservationRepository.CountActiveByEventIdAsync(eventId, ct).Returns(3);
+        eventRepository.TryFreeCapacityAsync(eventId, 3, ct).Returns(false);
 
         var ex = await Should.ThrowAsync<ConflictException>(() => sut.HandleAsync(eventId, userId, ct));
 
         ex.Message.ShouldContain("Failed to free the reserved seat for this event");
         ex.Message.ShouldContain(eventId.ToString());
-        await eventRepository.Received(1).TryFreeCapacityAsync(eventId, ct);
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
+        await eventReservationRepository.Received(1).CountActiveByEventIdAsync(eventId, ct);
+        await eventRepository.Received(1).TryFreeCapacityAsync(eventId, 3, ct);
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

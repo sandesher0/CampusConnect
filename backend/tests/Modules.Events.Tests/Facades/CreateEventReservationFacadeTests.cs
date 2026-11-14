@@ -30,12 +30,15 @@ public class CreateEventReservationFacadeTests
     {
         var reservation = EventTestData.CreateEventReservation();
         var ct = new CancellationToken();
-        eventRepository.TryReserveCapacityAsync(reservation.EventId, ct)
+        eventReservationRepository.CountActiveByEventIdAsync(reservation.EventId, ct)
+            .Returns(0);
+        eventRepository.TryReserveCapacityAsync(reservation.EventId, 0, ct)
             .Returns(true);
 
         await sut.HandleAsync(reservation, ct);
 
-        await eventRepository.Received(1).TryReserveCapacityAsync(reservation.EventId, ct);
+        await eventReservationRepository.Received(1).CountActiveByEventIdAsync(reservation.EventId, ct);
+        await eventRepository.Received(1).TryReserveCapacityAsync(reservation.EventId, 0, ct);
         await eventReservationRepository.Received(1).AddAsync(
             Arg.Is<EventReservationEntity>(e =>
                 e.EventId == reservation.EventId &&
