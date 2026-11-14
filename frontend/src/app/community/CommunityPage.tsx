@@ -189,6 +189,9 @@ function CommunityPageContent() {
                       <p className="text-xs font-semibold text-muted mt-2">
                         Status: <span className="text-ink">{community.status || "Active"}</span>
                       </p>
+                      <p className="text-xs font-semibold text-muted mt-1">
+                        Capacity: <span className="text-ink">{community.maximumMembers} members</span>
+                      </p>
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border-divider flex items-center justify-between text-xs font-bold text-primary group-hover:translate-x-1 transition-transform">

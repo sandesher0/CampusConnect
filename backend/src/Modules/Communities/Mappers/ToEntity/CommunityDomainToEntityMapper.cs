@@ -13,6 +13,7 @@ public static class CommunityDomainToEntityMapper
         {
             Id = Guid.CreateVersion7(),
             CommunityName = domain.CommunityName,
+            MaximumMembers = domain.MaximumMembers,
             CommunityType = domain.CommunityType,
             Status = CommunityStatusType.Active,
             CreatedBy = domain.CreatedBy,

@@ -8,5 +8,5 @@ public interface ICommunityMemberRepository : IBaseRepository<CommunityMemberEnt
 {
     Task<CommunityMember?> GetByCommunityIdAndUserId(Guid communityId, Guid accountId, CancellationToken cancellationToken);
     Task<PagedResult<CommunityMemberEntity>> GetByCommunityIdAsync(Guid communityId, PageRequest page, CancellationToken cancellationToken);
+    Task<int> CountByCommunityIdAsync(Guid communityId, CancellationToken cancellationToken);
 }
-

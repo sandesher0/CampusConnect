@@ -21,6 +21,8 @@ public class EventEntity
     public required DateTimeOffset CreateAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
+    public required int Capacity { get; set; }
+    public required int ReservedCount { get; set; } = 0;
 
     [ForeignKey(nameof(CommunityId))]
     public virtual CommunityEntity Community { get; set; } = default!;

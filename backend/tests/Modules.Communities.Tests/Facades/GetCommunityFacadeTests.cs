@@ -59,6 +59,7 @@ public class GetCommunityFacadeTests
         response.ShouldNotBeNull();
         response.CommunityId.ShouldBe(community.Id);
         response.CommunityName.ShouldBe(community.CommunityName);
+        response.MaximumMembers.ShouldBe(community.MaximumMembers);
         response.CommunityType.ShouldBe(community.CommunityType);
         response.CreatedBy.ShouldBe(community.CreatedBy);
         response.CommunityMembers.totalCount.ShouldBe(1);

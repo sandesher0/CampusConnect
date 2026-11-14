@@ -4,6 +4,7 @@ using Modules.Events.Ports;
 using SharedKernel.Interfaces;
 using SharedKernel.Constants;
 using Infrastructure.Mapper.ToDomain;
+using SharedKernel.Entities;
 
 namespace Infrastructure.Repositories;
 
@@ -52,4 +53,50 @@ public class EventRepository : BaseRepository<AppDbContext, EventEntity>, IEvent
             .Where(e => e.CreatedBy == userId && e.DeletedAt == null && e.EventEndDate > now)
             .CountAsync(cancellationToken);
     }
+    public async Task<bool> TryReserveCapacityAsync(Guid eventId, int activeReservations, CancellationToken cancellationToken)
+    {
+        var eventEntity = await dbSet
+            .Where(e => e.Id == eventId && e.DeletedAt == null)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (eventEntity is null)
+        {
+            return false;
+        }
+
+        if (activeReservations >= eventEntity.Capacity)
+        {
+            return false;
+        }
+
+        var affectedRows = await dbSet
+            .Where(e => e.Id == eventId)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    e => e.ReservedCount,
+                    activeReservations + 1),
+                cancellationToken);
+
+        return affectedRows > 0;
+    }
+    public async Task<bool> TryFreeCapacityAsync(Guid eventId, int activeReservations, CancellationToken cancellationToken)
+    {
+        var eventExists = await dbSet
+            .AsNoTracking()
+            .AnyAsync(e => e.Id == eventId && e.DeletedAt == null, cancellationToken);
+        if (!eventExists)
+        {
+            return false;
+        }
+
+        var affectedRows = await dbSet
+            .Where(e => e.Id == eventId)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    e => e.ReservedCount,
+                    activeReservations),
+                cancellationToken);
+
+        return affectedRows > 0;
+    }
+
 }

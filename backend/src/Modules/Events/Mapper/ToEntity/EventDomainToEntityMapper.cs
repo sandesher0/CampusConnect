@@ -17,6 +17,8 @@ public static class EventDomainToEntityMapper
             EventDate = domain.EventDate,
             EventEndDate = domain.EventEndDate,
             Visibility = domain.Visibility,
+            Capacity = domain.Capacity,
+            ReservedCount = domain.ReservedCount,
             Category = domain.Category,
             CreateAt = DateTimeOffset.UtcNow
         };

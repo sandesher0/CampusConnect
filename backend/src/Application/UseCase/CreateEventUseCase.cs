@@ -8,6 +8,9 @@ using Modules.Events.Ports;
 using SharedKernel.Exceptions;
 using SharedKernel.Interfaces;
 using Application.Mapper.ToModuleDomain;
+using Modules.Users.Ports;
+using SharedKernel.Domain;
+using SharedKernel.Constants;
 
 namespace Application.UseCase;
 
@@ -18,6 +21,7 @@ public class CreateEventUseCase : ICreateEventUseCase
     private readonly IEnsureCanCreateEventFacade ensureCanCreateEventFacade;
     private readonly IEventCreationPolicy eventCreationPolicy;
     private readonly ICreateEventFacade createEventFacade;
+    private readonly IGetUserPlanLimitFacade getUserPlanLimitFacade;
     private readonly IUnitOfWork unitOfWork;
 
     public CreateEventUseCase(
@@ -26,6 +30,7 @@ public class CreateEventUseCase : ICreateEventUseCase
             IEventCreationPolicy eventCreationPolicy,
             ILogger<CreateEventUseCase> logger,
             ICreateEventFacade createEventFacade,
+            IGetUserPlanLimitFacade getUserPlanLimitFacade,
             IUnitOfWork unitOfWork)
     {
         this.userIdByAccountIdFacade = userIdByAccountIdFacade;
@@ -33,6 +38,7 @@ public class CreateEventUseCase : ICreateEventUseCase
         this.eventCreationPolicy = eventCreationPolicy;
         this.logger = logger;
         this.createEventFacade = createEventFacade;
+        this.getUserPlanLimitFacade = getUserPlanLimitFacade;
         this.unitOfWork = unitOfWork;
     }
 
@@ -70,7 +76,18 @@ public class CreateEventUseCase : ICreateEventUseCase
             throw new PlanLimitExceededException(policyResult.LimitKey!, policyResult.Limit!.Value);
         }
 
-        await createEventFacade.HandleAsync(EventToEventsDomainMapper.ToDomain(domain, domain.CommunityId, userId.Value), cancellationToken);
+        var planLimit = await getUserPlanLimitFacade.GetUserPlanLimitAsync(userId.Value, cancellationToken);
+
+        var eventCapacityLimit = planLimit
+            .SingleOrDefault(p => p.LimitKey == LimitKeys.EventsMaxCapacity);
+
+        if (eventCapacityLimit?.Value is not int eventMaxCapacity)
+        {
+            throw new InvalidOperationException(
+                $"Event max capacity limit is missing or invalid for user {userId.Value}.");
+        }
+
+        await createEventFacade.HandleAsync(EventToEventsDomainMapper.ToDomain(domain, domain.CommunityId, userId.Value, eventMaxCapacity), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(

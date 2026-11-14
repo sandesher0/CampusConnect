@@ -18,6 +18,8 @@ using Xunit;
 
 public class JoinEventUseCaseTests
 {
+    private const string ReservationLockScope = "Events.Reservations";
+
     private readonly IGetUserIdByAccountIdFacade getUserIdByAccountIdFacade = Substitute.For<IGetUserIdByAccountIdFacade>();
     private readonly IGetEventFacade getEventFacade = Substitute.For<IGetEventFacade>();
     private readonly ICheckCommunityMembershipFacade checkCommunityMembershipFacade = Substitute.For<ICheckCommunityMembershipFacade>();
@@ -28,6 +30,14 @@ public class JoinEventUseCaseTests
 
     public JoinEventUseCaseTests()
     {
+        unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var operation = callInfo.Arg<Func<CancellationToken, Task>>();
+                var cancellationToken = callInfo.Arg<CancellationToken>();
+                return operation(cancellationToken);
+            });
+
         sut = new JoinEventUseCase(
             getUserIdByAccountIdFacade,
             getEventFacade,
@@ -88,6 +98,8 @@ public class JoinEventUseCaseTests
             Description = "Desc",
             Location = "Loc",
             CreatedBy = userId,
+            Capacity = 10,
+            ReservedCount = 0,
             EventDate = DateTimeOffset.UtcNow,
             EventEndDate = DateTimeOffset.UtcNow.AddHours(2),
             Visibility = SharedKernel.Constants.EventVisibility.Public,
@@ -119,6 +131,8 @@ public class JoinEventUseCaseTests
             Description = "Desc",
             Location = "Loc",
             CreatedBy = userId,
+            Capacity = 10,
+            ReservedCount = 0,
             EventDate = DateTimeOffset.UtcNow,
             EventEndDate = DateTimeOffset.UtcNow.AddHours(2),
             Visibility = SharedKernel.Constants.EventVisibility.Public,
@@ -151,6 +165,8 @@ public class JoinEventUseCaseTests
             Description = "Desc",
             Location = "Loc",
             CreatedBy = userId,
+            Capacity = 10,
+            ReservedCount = 0,
             EventDate = DateTimeOffset.UtcNow,
             EventEndDate = DateTimeOffset.UtcNow.AddHours(2),
             Visibility = SharedKernel.Constants.EventVisibility.Public,
@@ -188,6 +204,8 @@ public class JoinEventUseCaseTests
             Description = "Desc",
             Location = "Loc",
             CreatedBy = userId,
+            Capacity = 10,
+            ReservedCount = 0,
             EventDate = DateTimeOffset.UtcNow,
             EventEndDate = DateTimeOffset.UtcNow.AddHours(2),
             Visibility = SharedKernel.Constants.EventVisibility.Public,
@@ -198,9 +216,16 @@ public class JoinEventUseCaseTests
         checkCommunityMembershipFacade.HandleAsync(userId, communityId, ct)
             .Returns(new CommunityMember { CommunityId = communityId, UserId = userId, MemberType = SharedKernel.Constants.MemberType.ClubMember });
         checkEventReservationStatusFacade.HandleAsync(eventId, userId, ct).Returns(false);
+        unitOfWork.ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), ct)
+            .Returns(callInfo =>
+                callInfo.Arg<Func<CancellationToken, Task>>()(ct));
 
         await sut.HandleAsync(accountId, eventId, communityId, ct);
 
+        await unitOfWork.Received(1)
+            .ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), ct);
+        await unitOfWork.Received(1)
+            .AcquireAdvisoryLockAsync(ReservationLockScope, eventId, ct);
         await createEventReservationFacade.Received(1).HandleAsync(
             Arg.Is<EventReservation>(r =>
                 r.EventId == eventId &&

@@ -10,6 +10,8 @@ public class Event
     public required string Location { get; set; }
     public Guid CommunityId { get; set; }
     public Guid CreatedBy { get; set; }
+    public int Capacity { get; set; }
+    public int ReservedCount { get; set; }
     public required DateTimeOffset EventDate { get; set; }
     public required DateTimeOffset EventEndDate { get; set; }
     public required EventVisibility Visibility { get; set; }

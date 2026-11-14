@@ -10,6 +10,8 @@ public sealed record EventDetailResponse
     public required string Location { get; init; }
     public required Guid CommunityId { get; init; }
     public required Guid CreatedBy { get; init; }
+    public required int Capacity { get; init; }
+    public required int ReservedCount { get; init; }
     public required DateTimeOffset EventDate { get; init; }
     public required DateTimeOffset EventEndDate { get; init; }
     public required EventVisibility Visibility { get; init; }

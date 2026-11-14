@@ -2,7 +2,6 @@
 namespace Modules.Communities.Tests.Facades;
 
 using Microsoft.Extensions.Logging.Abstractions;
-using Modules.Communities.Domain;
 using Modules.Communities.Facades;
 using Modules.Communities.Policies;
 using Modules.Communities.Ports;
@@ -21,18 +20,32 @@ public class CreateCommunityFacadeTests
     private readonly ICommunityRepository communityRepository = Substitute.For<ICommunityRepository>();
     private readonly ICommunityMemberRepository communityMemberRepository = Substitute.For<ICommunityMemberRepository>();
     private readonly ICommunityCreationPolicy communityCreationPolicy = Substitute.For<ICommunityCreationPolicy>();
+    private readonly ILimitProvider limitProvider = Substitute.For<ILimitProvider>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly CreateCommunityFacade sut;
 
     public CreateCommunityFacadeTests()
     {
+        unitOfWork
+            .ExecuteInTransactionAsync(Arg.Any<Func<CancellationToken, Task>>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var operation = callInfo.Arg<Func<CancellationToken, Task>>();
+                var cancellationToken = callInfo.Arg<CancellationToken>();
+                return operation(cancellationToken);
+            });
+
         communityCreationPolicy.EvaluateAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(PolicyResult.Success());
+
+        limitProvider.GetLimitAsync(Arg.Any<Guid>(), LimitKeys.CommunityMaxMember, Arg.Any<CancellationToken>())
+            .Returns(new Limit(100));
 
         sut = new CreateCommunityFacade(
             communityRepository,
             communityMemberRepository,
             communityCreationPolicy,
+            limitProvider,
             NullLogger<CreateCommunityFacade>.Instance,
             unitOfWork);
     }
@@ -40,8 +53,9 @@ public class CreateCommunityFacadeTests
     [Fact]
     public async Task HandleAsync_WhenPolicyFails_ThrowsPlanLimitExceededExceptionAndDoesNotSave()
     {
-        var community = CommunityTestData.CreateCommunity();
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
         var ct = new CancellationToken();
+
         communityCreationPolicy.EvaluateAsync(community.CreatedBy, ct)
             .Returns(PolicyResult.Failure("Limit reached", LimitKeys.CommunitiesMaxCreated, 3));
 
@@ -49,21 +63,53 @@ public class CreateCommunityFacadeTests
 
         ex.LimitKey.ShouldBe(LimitKeys.CommunitiesMaxCreated);
         ex.Limit.ShouldBe(3);
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct);
         await communityRepository.DidNotReceive().AddAsync(Arg.Any<CommunityEntity>(), Arg.Any<CancellationToken>());
+        await communityMemberRepository.DidNotReceive().AddAsync(Arg.Any<CommunityMemberEntity>(), Arg.Any<CancellationToken>());
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task HandleAsync_ValidCommunity_AcquiresLockBeforeEvaluatingPolicy()
+    {
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
+        var ct = new CancellationToken();
+        var callOrder = new List<string>();
+
+        unitOfWork
+            .AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct)
+            .Returns(_ =>
+            {
+                callOrder.Add("lock");
+                return Task.CompletedTask;
+            });
+
+        communityCreationPolicy
+            .EvaluateAsync(community.CreatedBy, ct)
+            .Returns(_ =>
+            {
+                callOrder.Add("policy");
+                return PolicyResult.Success();
+            });
+
+        await sut.HandleAsync(community, ct);
+
+        callOrder.ShouldBe(new[] { "lock", "policy" });
     }
 
     [Fact]
     public async Task HandleAsync_ValidCommunity_AddsCommunityAndOfficerMemberAndSaves()
     {
-        var community = CommunityTestData.CreateCommunity();
+        var community = CommunityTestData.CreateCommunity(maximumMembers: 0);
         var ct = new CancellationToken();
 
         await sut.HandleAsync(community, ct);
 
+        await unitOfWork.Received(1).AcquireAdvisoryLockAsync("Communities.Create", community.CreatedBy, ct);
         await communityRepository.Received(1).AddAsync(
             Arg.Is<CommunityEntity>(c =>
                 c.CommunityName == community.CommunityName &&
+                c.MaximumMembers == 100 &&
                 c.CommunityType == community.CommunityType &&
                 c.CreatedBy == community.CreatedBy &&
                 c.Status == CommunityStatusType.Active),

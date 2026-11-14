@@ -57,6 +57,7 @@ public class GetUserLimitsUseCaseTests
         var limitsDict = new Dictionary<string, Limit>
         {
             { LimitKeys.CommunitiesMaxCreated, new Limit(3) },
+            { LimitKeys.CommunityMaxMember, new Limit(100) },
             { LimitKeys.EventsMaxTotalCreated, new Limit(10) },
             { LimitKeys.EventsMaxActiveCreated, new Limit(5) },
             { LimitKeys.EventsMaxCapacity, new Limit(200) }
@@ -72,6 +73,9 @@ public class GetUserLimitsUseCaseTests
         result.PlanCode.ShouldBe("free");
         result.Limits[LimitKeys.CommunitiesMaxCreated].Limit.ShouldBe(3);
         result.Limits[LimitKeys.CommunitiesMaxCreated].CurrentUsage.ShouldBe(2);
+
+        result.Limits[LimitKeys.CommunityMaxMember].Limit.ShouldBe(100);
+        result.Limits[LimitKeys.CommunityMaxMember].CurrentUsage.ShouldBeNull();
 
         result.Limits[LimitKeys.EventsMaxTotalCreated].Limit.ShouldBe(10);
         result.Limits[LimitKeys.EventsMaxTotalCreated].CurrentUsage.ShouldBe(7);

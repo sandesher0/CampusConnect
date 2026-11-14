@@ -24,6 +24,7 @@ export type CommunityMemberResponse = Omit<components["schemas"]["CommunityMembe
 export interface CommunityDetailResponse {
   communityId: string;
   communityName: string;
+  maximumMembers: number;
   communityType: CommunityType;
   createdBy: string;
   communityMembers: PagedResult<CommunityMemberResponse>;

@@ -11,7 +11,7 @@ public class PlanLimitEntity
 
     public required string LimitKey { get; set; }
 
-    public int? Value { get; set; }
+    public int Value { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
 

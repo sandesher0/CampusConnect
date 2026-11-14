@@ -9,8 +9,10 @@ using Modules.Auth.Ports;
 using Modules.Communities.Ports;
 using Modules.Events.Policies;
 using Modules.Events.Ports;
+using Modules.Users.Ports;
 using NSubstitute;
 using SharedKernel.Constants;
+using SharedKernel.Domain;
 using SharedKernel.Exceptions;
 using SharedKernel.Interfaces;
 using SharedKernel.Models;
@@ -23,6 +25,7 @@ public class CreateEventUseCaseTests
     private readonly IEnsureCanCreateEventFacade ensureCanCreateEventFacade = Substitute.For<IEnsureCanCreateEventFacade>();
     private readonly IEventCreationPolicy eventCreationPolicy = Substitute.For<IEventCreationPolicy>();
     private readonly ICreateEventFacade createEventFacade = Substitute.For<ICreateEventFacade>();
+    private readonly IGetUserPlanLimitFacade getUserPlanLimitFacade = Substitute.For<IGetUserPlanLimitFacade>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly CreateEventUseCase sut;
 
@@ -30,6 +33,17 @@ public class CreateEventUseCaseTests
     {
         eventCreationPolicy.EvaluateAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(PolicyResult.Success());
+        getUserPlanLimitFacade.GetUserPlanLimitAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(new List<PlanLimit>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    PlanId = Guid.NewGuid(),
+                    LimitKey = LimitKeys.EventsMaxCapacity,
+                    Value = 200
+                }
+            });
 
         sut = new CreateEventUseCase(
             userIdByAccountIdFacade,
@@ -37,6 +51,7 @@ public class CreateEventUseCaseTests
             eventCreationPolicy,
             NullLogger<CreateEventUseCase>.Instance,
             createEventFacade,
+            getUserPlanLimitFacade,
             unitOfWork);
     }
 
@@ -113,7 +128,7 @@ public class CreateEventUseCaseTests
         await eventCreationPolicy.Received(1)
             .EvaluateAsync(userId, ct);
         await createEventFacade.Received(1)
-            .HandleAsync(Arg.Any<Modules.Events.Domain.Event>(), ct);
+            .HandleAsync(Arg.Is<Modules.Events.Domain.Event>(e => e.Capacity == 200), ct);
         await unitOfWork.Received(1).SaveChangesAsync(ct);
     }
 }

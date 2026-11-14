@@ -7,17 +7,20 @@ using Modules.Communities.Facades;
 using Modules.Communities.Ports;
 using Modules.Communities.Tests.TestData;
 using NSubstitute;
+using SharedKernel.Exceptions;
 using Shouldly;
 using Xunit;
 
 public class CommunityMembershipEligibilityFacadeTests
 {
+    private readonly ICommunityRepository communityRepository = Substitute.For<ICommunityRepository>();
     private readonly ICommunityMemberRepository communityMemberRepository = Substitute.For<ICommunityMemberRepository>();
     private readonly CommunityMembershipEligibilityFacade sut;
 
     public CommunityMembershipEligibilityFacadeTests()
     {
         sut = new CommunityMembershipEligibilityFacade(
+            communityRepository,
             communityMemberRepository,
             NullLogger<CommunityMembershipEligibilityFacade>.Instance);
     }
@@ -44,9 +47,27 @@ public class CommunityMembershipEligibilityFacadeTests
         var userId = CommunityTestData.DefaultUserId;
         var ct = new CancellationToken();
         communityMemberRepository.GetByCommunityIdAndUserId(communityId, userId, ct).Returns((CommunityMember?)null);
+        communityRepository.GetByIdAsync(communityId, ct).Returns(CommunityTestData.CreateCommunityEntity(id: communityId, maximumMembers: 100));
+        communityMemberRepository.CountByCommunityIdAsync(communityId, ct).Returns(5);
 
         await Should.NotThrowAsync(() => sut.HandleAsync(communityId, userId, ct));
 
         await communityMemberRepository.Received(1).GetByCommunityIdAndUserId(communityId, userId, ct);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenCommunityIsFull_ThrowsConflictException()
+    {
+        var communityId = CommunityTestData.DefaultCommunityId;
+        var userId = CommunityTestData.DefaultUserId;
+        var ct = new CancellationToken();
+        communityMemberRepository.GetByCommunityIdAndUserId(communityId, userId, ct).Returns((CommunityMember?)null);
+        communityRepository.GetByIdAsync(communityId, ct).Returns(CommunityTestData.CreateCommunityEntity(id: communityId, maximumMembers: 2));
+        communityMemberRepository.CountByCommunityIdAsync(communityId, ct).Returns(2);
+
+        var ex = await Should.ThrowAsync<ConflictException>(() => sut.HandleAsync(communityId, userId, ct));
+
+        ex.Message.ShouldContain(communityId.ToString());
+        ex.Message.ShouldContain("2");
     }
 }

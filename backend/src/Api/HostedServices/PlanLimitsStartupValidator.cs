@@ -37,12 +37,13 @@ public class PlanLimitsStartupValidator : IHostedService
             LimitKeys.EventsMaxTotalCreated,
             LimitKeys.EventsMaxActiveCreated,
             LimitKeys.CommunitiesMaxCreated,
-            LimitKeys.EventsMaxCapacity
+            LimitKeys.EventsMaxCapacity,
+            LimitKeys.CommunityMaxMember
         ];
 
         foreach (var key in requiredKeys)
         {
-            if (!limitsDict.TryGetValue(key, out var limitRecord) || limitRecord.Value is null)
+            if (!limitsDict.TryGetValue(key, out var limitRecord) )
             {
                 throw new InvalidOperationException($"Fatal configuration error: Required limit '{key}' has no configured value on default plan '{defaultPlan.Code}'.");
             }
