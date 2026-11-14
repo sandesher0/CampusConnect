@@ -13,8 +13,7 @@ public static class AccountEntityToDomain
             UserId = entity.UserId,
             Username = entity.Username,
             PasswordHash = entity.PasswordHash,
-            AccountVerifiedAt = entity.AccountVerifiedAt,
-            RefreshToken = entity.RefreshToken
+            AccountVerifiedAt = entity.AccountVerifiedAt
         };
     }
 }

@@ -33,6 +33,13 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
             return null;
         return AccountEntityToDomain.ToDomain(account);
     }
+
+    public async Task<AccountEntity?> GetByUsernameForLoginAsync(string username, CancellationToken cancellationToken = default)
+    {
+        return await dbSet
+            .SingleOrDefaultAsync(account => account.Username == username, cancellationToken);
+    }
+
     public async Task<Guid?> GetUserIdByAccountIdAsync(Guid accountId, CancellationToken cancellationToken)
     {
         var entity = await dbSet.AsNoTracking().Where(a => a.Id == accountId).SingleOrDefaultAsync(cancellationToken);
@@ -43,5 +50,23 @@ public class AccountRepository : BaseRepository<AppDbContext, AccountEntity>, IA
         return entity.UserId;
     }
 
+    public async Task AddRefreshTokenAsync(RefreshTokenEntity refreshToken, CancellationToken cancellationToken = default)
+    {
+        await dbContext.RefreshTokens.AddAsync(refreshToken, cancellationToken);
+    }
+
+    public async Task RemoveRefreshTokenAsync(string refreshTokenHash, CancellationToken cancellationToken = default)
+    {
+        await dbContext.RefreshTokens
+            .Where(token => token.TokenHash == refreshTokenHash)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public async Task PruneExpiredRefreshTokensAsync(Guid accountId, DateTimeOffset nowUtc, CancellationToken cancellationToken = default)
+    {
+        await dbContext.RefreshTokens
+            .Where(token => token.AccountId == accountId && token.ExpiresAtUtc <= nowUtc)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
 
 }

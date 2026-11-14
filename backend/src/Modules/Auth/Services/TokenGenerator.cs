@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Modules.Auth.Domain;
 using Modules.Auth.Ports;
 using Modules.Auth.Options;
+using System.Security.Cryptography;
 
 public class TokenGenerator : ITokenGenerator
 {
@@ -41,5 +42,11 @@ public class TokenGenerator : ITokenGenerator
         var token = new JsonWebTokenHandler().CreateToken(tokenDescriptor);
 
         return token;
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
     }
 }

@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<PlanEntity> Plans => Set<PlanEntity>();
     public DbSet<PlanLimitEntity> PlanLimits => Set<PlanLimitEntity>();
     public DbSet<UserPlanEntity> UserPlans => Set<UserPlanEntity>();
+    public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -28,6 +29,16 @@ public class AppDbContext : DbContext
         builder.Entity<AccountEntity>()
             .HasIndex(account => account.Username)
             .IsUnique();
+
+        builder.Entity<RefreshTokenEntity>(entity =>
+        {
+            entity.HasIndex(rt => rt.TokenHash).IsUnique();
+            entity.HasIndex(rt => rt.ExpiresAtUtc);
+            entity.HasOne(rt => rt.Account)
+                .WithMany(account => account.RefreshTokens)
+                .HasForeignKey(rt => rt.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         builder.Entity<EventReservationEntity>()
             .HasIndex(reservation => new { reservation.EventId, reservation.UserId })
