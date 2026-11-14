@@ -1,4 +1,5 @@
 
+using Api.Controllers.Auth;
 using Api.Requests;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,23 +25,24 @@ public class LoginController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login(LoginRequest loginRequest, CancellationToken cancellationToken)
     {
+        var nowUtc = DateTimeOffset.UtcNow;
         var login = new Login
         {
             Username = loginRequest.Username,
             Password = loginRequest.Password,
         };
-        var accessToken = await loginFacade.HandleAsync(login, cancellationToken);
+        var tokens = await loginFacade.HandleAsync(login, cancellationToken);
 
         Response.Cookies.Append(
             "accessToken",
-            accessToken,
-            new CookieOptions
-            {
-                SameSite = SameSiteMode.Lax,
-                HttpOnly = true,
-                Secure = true
+            tokens.AccessToken,
+            AuthCookieOptions.CreateAccessToken(nowUtc)
+        );
 
-            }
+        Response.Cookies.Append(
+            "refreshToken",
+            tokens.RefreshToken,
+            AuthCookieOptions.CreateRefreshToken(nowUtc)
         );
         return Ok();
     }

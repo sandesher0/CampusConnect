@@ -77,4 +77,21 @@ public class TokenGeneratorTests
         var result = handler.ValidateToken(tamperedToken, validationParameters);
         result.IsValid.ShouldBeFalse();
     }
+
+    [Fact]
+    public void GenerateRefreshToken_ReturnsUniqueBase64Token()
+    {
+        var optionsMock = Options.Create(jwtOptions);
+        var sut = new TokenGenerator(optionsMock);
+
+        var token1 = sut.GenerateRefreshToken();
+        var token2 = sut.GenerateRefreshToken();
+
+        token1.ShouldNotBeNullOrWhiteSpace();
+        token2.ShouldNotBeNullOrWhiteSpace();
+        token1.ShouldNotBe(token2);
+
+        var bytes = Convert.FromBase64String(token1);
+        bytes.Length.ShouldBe(64);
+    }
 }

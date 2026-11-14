@@ -23,7 +23,7 @@ public class AccountEntity
 
 
     public int FailedLoginAttempts { get; set; }
-    public List<string>? RefreshToken { get; set; }
+    public ICollection<RefreshTokenEntity> RefreshTokens { get; set; } = [];
 
     public required DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset ModifiedAt { get; set; }

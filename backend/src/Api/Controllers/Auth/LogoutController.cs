@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Modules.Auth.Ports;
+using Modules.Auth.Services;
 
 namespace Api.Controllers.Auth;
 
@@ -8,16 +9,26 @@ namespace Api.Controllers.Auth;
 [Route("api/auth")]
 public class LogoutController : ControllerBase
 {
+    private readonly IAccountRepository accountRepository;
+
+    public LogoutController(IAccountRepository accountRepository)
+    {
+        this.accountRepository = accountRepository;
+    }
+
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> HandleAsync(CancellationToken cancellationToken)
     {
-        Response.Cookies.Delete("accessToken", new CookieOptions
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (!string.IsNullOrWhiteSpace(refreshToken))
         {
-            SameSite = SameSiteMode.Lax,
-            HttpOnly = true,
-            Secure = true
-        });
+            var refreshTokenHash = RefreshTokenHasher.Hash(refreshToken);
+            await accountRepository.RemoveRefreshTokenAsync(refreshTokenHash, cancellationToken);
+        }
+
+        Response.Cookies.Delete("accessToken", AuthCookieOptions.DeleteAccessToken());
+        Response.Cookies.Delete("refreshToken", AuthCookieOptions.DeleteRefreshToken());
         return Ok();
     }
 }
